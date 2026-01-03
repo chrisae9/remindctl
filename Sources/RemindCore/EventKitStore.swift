@@ -10,21 +10,34 @@ public actor RemindersStore {
   }
 
   public func requestAccess() async throws {
-    let status = EKEventStore.authorizationStatus(for: .reminder)
+    let status = Self.authorizationStatus()
     switch status {
     case .notDetermined:
-      let granted = try await requestFullAccess()
-      if !granted {
+      let updated = try await requestAuthorization()
+      if updated != .fullAccess {
         throw RemindCoreError.accessDenied
       }
     case .denied, .restricted:
       throw RemindCoreError.accessDenied
     case .writeOnly:
       throw RemindCoreError.writeOnlyAccess
-    case .fullAccess, .authorized:
+    case .fullAccess:
       break
-    @unknown default:
-      throw RemindCoreError.operationFailed("Unknown authorization status")
+    }
+  }
+
+  public static func authorizationStatus() -> RemindersAuthorizationStatus {
+    RemindersAuthorizationStatus(eventKitStatus: EKEventStore.authorizationStatus(for: .reminder))
+  }
+
+  public func requestAuthorization() async throws -> RemindersAuthorizationStatus {
+    let status = Self.authorizationStatus()
+    switch status {
+    case .notDetermined:
+      let granted = try await requestFullAccess()
+      return granted ? .fullAccess : .denied
+    default:
+      return status
     }
   }
 

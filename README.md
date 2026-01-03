@@ -16,6 +16,12 @@ pnpm build
 # binary at ./bin/remindctl
 ```
 
+## Development
+```bash
+make remindctl ARGS="status"   # clean build + run
+make check                     # lint + test + coverage gate
+```
+
 ## Requirements
 - macOS 14+ (Sonoma or later)
 - Swift 6.2+
@@ -44,6 +50,8 @@ remindctl add --title "Call mom" --list Personal --due tomorrow
 remindctl edit 1 --title "New title" --due 2026-01-04
 remindctl complete 1 2 3
 remindctl delete 4A83 --force
+remindctl status                # permission status
+remindctl authorize             # request permissions
 ```
 
 ## Output formats
@@ -59,5 +67,6 @@ Accepted by `--due` and filters:
 - ISO 8601 (`2026-01-03T12:34:56Z`)
 
 ## Permissions
-On first run, macOS will prompt for Reminders access. You can manage access in:
-System Settings → Privacy & Security → Reminders.
+Run `remindctl authorize` to trigger the system prompt. If access is denied, enable
+Terminal (or remindctl) in System Settings → Privacy & Security → Reminders.
+If running over SSH, grant access on the Mac that runs the command.

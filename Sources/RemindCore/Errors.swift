@@ -14,9 +14,17 @@ public enum RemindCoreError: LocalizedError, Sendable, Equatable {
   public var errorDescription: String? {
     switch self {
     case .accessDenied:
-      return "Access to Reminders denied. Grant access in System Settings > Privacy & Security > Reminders."
+      return [
+        "Reminders access denied.",
+        "Run `remindctl authorize` to trigger the prompt, then allow Terminal (or remindctl)",
+        "in System Settings > Privacy & Security > Reminders.",
+        "If running over SSH, grant access on the Mac that runs the command.",
+      ].joined(separator: " ")
     case .writeOnlyAccess:
-      return "Reminders access is write-only. Full access is required to read reminders."
+      return [
+        "Reminders access is write-only.",
+        "Switch to Full Access in System Settings > Privacy & Security > Reminders.",
+      ].joined(separator: " ")
     case .listNotFound(let name):
       return "List not found: \"\(name)\"."
     case .reminderNotFound(let id):

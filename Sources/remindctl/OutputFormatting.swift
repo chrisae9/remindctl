@@ -15,6 +15,11 @@ struct ListSummary: Codable, Sendable, Equatable {
   let overdueCount: Int
 }
 
+struct AuthorizationSummary: Codable, Sendable, Equatable {
+  let status: String
+  let authorized: Bool
+}
+
 enum OutputRenderer {
   static func printReminders(_ reminders: [ReminderItem], format: OutputFormat) {
     switch format {
@@ -67,6 +72,19 @@ enum OutputRenderer {
       printJSON(payload)
     case .quiet:
       break
+    }
+  }
+
+  static func printAuthorizationStatus(_ status: RemindersAuthorizationStatus, format: OutputFormat) {
+    switch format {
+    case .standard:
+      Swift.print("Reminders access: \(status.displayName)")
+    case .plain:
+      Swift.print(status.rawValue)
+    case .json:
+      printJSON(AuthorizationSummary(status: status.rawValue, authorized: status.isAuthorized))
+    case .quiet:
+      Swift.print(status.isAuthorized ? "1" : "0")
     }
   }
 

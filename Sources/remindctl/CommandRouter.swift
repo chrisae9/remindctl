@@ -17,6 +17,8 @@ struct CommandRouter {
       EditCommand.spec,
       CompleteCommand.spec,
       DeleteCommand.spec,
+      StatusCommand.spec,
+      AuthorizeCommand.spec,
     ]
     let descriptor = CommandDescriptor(
       name: rootName,

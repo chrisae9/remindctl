@@ -5,6 +5,7 @@
 - Show reminders with filters (today/tomorrow/week/overdue/upcoming/completed/all/date)
 - Manage lists (list, create, rename, delete)
 - Add, edit, complete, and delete reminders
+- Authorization status and permission prompt command
 - JSON and plain output modes for scripting
 - Flexible date parsing (relative, ISO 8601, and common formats)
 - GitHub Actions CI with lint, tests, and coverage gate
