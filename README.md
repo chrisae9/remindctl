@@ -1,5 +1,7 @@
 # remindctl
 
+Forget the app, not the task ✅
+
 Fast CLI for Apple Reminders on macOS.
 
 ## Install
