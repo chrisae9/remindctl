@@ -6,12 +6,12 @@ enum EditCommand {
   static var spec: CommandSpec {
     CommandSpec(
       name: "edit",
-      abstract: "Edit a reminder",
-      discussion: "Use an index or ID prefix from the show output.",
+      abstract: "Edit one or more reminders",
+      discussion: "Use indexes or ID prefixes from the show output. Applies the same changes to all specified reminders.",
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
-            .make(label: "id", help: "Index or ID prefix", isOptional: false)
+            .make(label: "ids", help: "Indexes or ID prefixes", isOptional: false)
           ],
           options: [
             .make(label: "title", names: [.short("t"), .long("title")], help: "New title", parsing: .singleValue),
@@ -37,27 +37,27 @@ enum EditCommand {
               label: "clearRecurrence", names: [.long("clear-recurrence")], help: "Clear recurrence"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
+            .make(label: "dryRun", names: [.long("dry-run")], help: "Preview without changes"),
           ]
         )
       ),
       usageExamples: [
         "remindctl edit 1 --title \"New title\"",
         "remindctl edit 4A83 --due tomorrow",
-        "remindctl edit 2 --priority high --notes \"Call before noon\"",
+        "remindctl edit 1 2 3 --priority high",
+        "remindctl edit 1 2 3 --list Work",
         "remindctl edit 3 --clear-due",
       ]
     ) { values, runtime in
-      guard let input = values.argument(0) else {
-        throw ParsedValuesError.missingArgument("id")
+      let inputs = values.positional
+      guard !inputs.isEmpty else {
+        throw ParsedValuesError.missingArgument("ids")
       }
 
       let store = RemindersStore()
       try await store.requestAccess()
       let reminders = try await store.reminders(in: nil)
-      let resolved = try IDResolver.resolve([input], from: reminders)
-      guard let reminder = resolved.first else {
-        throw RemindCoreError.reminderNotFound(input)
-      }
+      let resolved = try IDResolver.resolve(inputs, from: reminders)
 
       let title = values.option("title")
       let listName = values.option("list")
@@ -103,6 +103,11 @@ enum EditCommand {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 
+      if values.flag("dryRun") {
+        OutputRenderer.printReminders(resolved, format: runtime.outputFormat)
+        return
+      }
+
       let update = ReminderUpdate(
         title: title,
         notes: notes,
@@ -113,8 +118,12 @@ enum EditCommand {
         isCompleted: isCompleted
       )
 
-      let updated = try await store.updateReminder(id: reminder.id, update: update)
-      OutputRenderer.printReminder(updated, format: runtime.outputFormat)
+      var updated: [ReminderItem] = []
+      for reminder in resolved {
+        let result = try await store.updateReminder(id: reminder.id, update: update)
+        updated.append(result)
+      }
+      OutputRenderer.printReminders(updated, format: runtime.outputFormat)
     }
   }
 }
