@@ -44,6 +44,27 @@ public struct RecurrenceRule: Codable, Sendable, Equatable {
   }
 }
 
+public enum AlarmType: Codable, Sendable, Equatable {
+  case absolute(Date)
+  case relative(TimeInterval)
+}
+
+public struct ReminderAlarm: Codable, Sendable, Equatable {
+  public let type: AlarmType
+
+  public init(type: AlarmType) {
+    self.type = type
+  }
+
+  public init(absoluteDate: Date) {
+    self.type = .absolute(absoluteDate)
+  }
+
+  public init(relativeOffset: TimeInterval) {
+    self.type = .relative(relativeOffset)
+  }
+}
+
 public enum ReminderPriority: String, Codable, CaseIterable, Sendable {
   case none
   case low
@@ -98,6 +119,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let startDate: Date?
   public let timeZone: String?
   public let recurrence: RecurrenceRule?
+  public let alarms: [ReminderAlarm]
   public let listID: String
   public let listName: String
 
@@ -112,6 +134,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     startDate: Date? = nil,
     timeZone: String? = nil,
     recurrence: RecurrenceRule? = nil,
+    alarms: [ReminderAlarm] = [],
     listID: String,
     listName: String
   ) {
@@ -125,6 +148,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.startDate = startDate
     self.timeZone = timeZone
     self.recurrence = recurrence
+    self.alarms = alarms
     self.listID = listID
     self.listName = listName
   }
@@ -138,6 +162,7 @@ public struct ReminderDraft: Sendable {
   public let timeZone: String?
   public let priority: ReminderPriority
   public let recurrence: RecurrenceRule?
+  public let alarms: [ReminderAlarm]
 
   public init(
     title: String,
@@ -146,7 +171,8 @@ public struct ReminderDraft: Sendable {
     startDate: Date? = nil,
     timeZone: String? = nil,
     priority: ReminderPriority,
-    recurrence: RecurrenceRule? = nil
+    recurrence: RecurrenceRule? = nil,
+    alarms: [ReminderAlarm] = []
   ) {
     self.title = title
     self.notes = notes
@@ -155,6 +181,7 @@ public struct ReminderDraft: Sendable {
     self.timeZone = timeZone
     self.priority = priority
     self.recurrence = recurrence
+    self.alarms = alarms
   }
 }
 
@@ -166,6 +193,7 @@ public struct ReminderUpdate: Sendable {
   public let timeZone: String??
   public let priority: ReminderPriority?
   public let recurrence: RecurrenceRule??
+  public let alarms: [ReminderAlarm]??
   public let listName: String?
   public let isCompleted: Bool?
 
@@ -177,6 +205,7 @@ public struct ReminderUpdate: Sendable {
     timeZone: String?? = nil,
     priority: ReminderPriority? = nil,
     recurrence: RecurrenceRule?? = nil,
+    alarms: [ReminderAlarm]?? = nil,
     listName: String? = nil,
     isCompleted: Bool? = nil
   ) {
@@ -187,6 +216,7 @@ public struct ReminderUpdate: Sendable {
     self.timeZone = timeZone
     self.priority = priority
     self.recurrence = recurrence
+    self.alarms = alarms
     self.listName = listName
     self.isCompleted = isCompleted
   }

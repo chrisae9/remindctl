@@ -176,4 +176,37 @@ enum CommandHelpers {
     }
     return value
   }
+
+  static func parseAlarm(_ value: String) throws -> ReminderAlarm {
+    let trimmed = value.trimmingCharacters(in: .whitespaces)
+
+    // Relative offsets: -15m, -1h, -1d, 0
+    if trimmed == "0" {
+      return ReminderAlarm(relativeOffset: 0)
+    }
+
+    let lower = trimmed.lowercased()
+    if lower.hasPrefix("-") || lower.hasPrefix("+") {
+      let sign: Double = lower.hasPrefix("-") ? -1 : 1
+      let numStr = String(lower.dropFirst())
+
+      if numStr.hasSuffix("m"), let mins = Double(numStr.dropLast()) {
+        return ReminderAlarm(relativeOffset: sign * mins * 60)
+      }
+      if numStr.hasSuffix("h"), let hrs = Double(numStr.dropLast()) {
+        return ReminderAlarm(relativeOffset: sign * hrs * 3600)
+      }
+      if numStr.hasSuffix("d"), let days = Double(numStr.dropLast()) {
+        return ReminderAlarm(relativeOffset: sign * days * 86400)
+      }
+    }
+
+    // Absolute date
+    if let date = DateParsing.parseUserDate(trimmed) {
+      return ReminderAlarm(absoluteDate: date)
+    }
+
+    throw RemindCoreError.operationFailed(
+      "Invalid alarm: \"\(value)\" (use -15m, -1h, -1d, 0, or a date)")
+  }
 }

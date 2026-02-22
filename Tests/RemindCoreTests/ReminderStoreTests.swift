@@ -365,12 +365,71 @@ struct ReminderStoreTests {
   @Test("Clear recurrence rule")
   func clearRecurrenceRule() async throws {
     let store = sampleStore()
-    // Set a recurrence
     let setUpdate = ReminderUpdate(recurrence: .some(RecurrenceRule(frequency: .daily)))
     _ = try await store.updateReminder(id: "r1", update: setUpdate)
-    // Clear it
     let clearUpdate = ReminderUpdate(recurrence: .some(nil))
     let updated = try await store.updateReminder(id: "r1", update: clearUpdate)
     #expect(updated.recurrence == nil)
+  }
+
+  // MARK: - Alarms
+
+  @Test("Create reminder with relative alarm")
+  func createWithRelativeAlarm() async throws {
+    let store = sampleStore()
+    let alarms = [ReminderAlarm(relativeOffset: -900)]
+    let draft = ReminderDraft(
+      title: "Alarmed", notes: nil, dueDate: Date(), priority: .none, alarms: alarms
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.alarms.count == 1)
+    #expect(item.alarms[0] == ReminderAlarm(relativeOffset: -900))
+  }
+
+  @Test("Create reminder with multiple alarms")
+  func createWithMultipleAlarms() async throws {
+    let store = sampleStore()
+    let alarms = [
+      ReminderAlarm(relativeOffset: -900),
+      ReminderAlarm(relativeOffset: -3600),
+    ]
+    let draft = ReminderDraft(
+      title: "Multi alarm", notes: nil, dueDate: Date(), priority: .none, alarms: alarms
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.alarms.count == 2)
+  }
+
+  @Test("Update reminder alarms")
+  func updateAlarms() async throws {
+    let store = sampleStore()
+    let alarms = [ReminderAlarm(relativeOffset: -1800)]
+    let update = ReminderUpdate(alarms: .some(alarms))
+    let updated = try await store.updateReminder(id: "r1", update: update)
+    #expect(updated.alarms.count == 1)
+    #expect(updated.alarms[0] == ReminderAlarm(relativeOffset: -1800))
+  }
+
+  @Test("Clear reminder alarms")
+  func clearAlarms() async throws {
+    let store = sampleStore()
+    let setUpdate = ReminderUpdate(alarms: .some([ReminderAlarm(relativeOffset: -900)]))
+    _ = try await store.updateReminder(id: "r1", update: setUpdate)
+    let clearUpdate = ReminderUpdate(alarms: .some(nil))
+    let updated = try await store.updateReminder(id: "r1", update: clearUpdate)
+    #expect(updated.alarms.isEmpty)
+  }
+
+  @Test("Create reminder with absolute alarm")
+  func createWithAbsoluteAlarm() async throws {
+    let store = sampleStore()
+    let alarmDate = Date(timeIntervalSince1970: 1_700_000_000)
+    let alarms = [ReminderAlarm(absoluteDate: alarmDate)]
+    let draft = ReminderDraft(
+      title: "Abs alarm", notes: nil, dueDate: nil, priority: .none, alarms: alarms
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.alarms.count == 1)
+    #expect(item.alarms[0] == ReminderAlarm(absoluteDate: alarmDate))
   }
 }

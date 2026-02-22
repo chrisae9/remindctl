@@ -66,6 +66,12 @@ enum EditCommand {
               help: "IANA timezone (e.g. America/New_York)",
               parsing: .singleValue
             ),
+            .make(
+              label: "alarm",
+              names: [.long("alarm")],
+              help: "Alarm: -15m, -1h, -1d, 0, or date (repeatable)",
+              parsing: .singleValue
+            ),
           ],
           flags: [
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
@@ -73,6 +79,7 @@ enum EditCommand {
               label: "clearRecurrence", names: [.long("clear-recurrence")], help: "Clear recurrence"),
             .make(label: "clearStartDate", names: [.long("clear-start-date")], help: "Clear start date"),
             .make(label: "clearTimezone", names: [.long("clear-timezone")], help: "Clear timezone"),
+            .make(label: "clearAlarms", names: [.long("clear-alarms")], help: "Remove all alarms"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
             .make(label: "dryRun", names: [.long("dry-run")], help: "Preview without changes"),
@@ -167,6 +174,18 @@ enum EditCommand {
         timeZoneUpdate = .some(nil)
       }
 
+      var alarmsUpdate: [ReminderAlarm]??
+      let alarmValues = values.optionValues("alarm")
+      if !alarmValues.isEmpty {
+        alarmsUpdate = try alarmValues.map(CommandHelpers.parseAlarm)
+      }
+      if values.flag("clearAlarms") {
+        if alarmsUpdate != nil {
+          throw RemindCoreError.operationFailed("Use either --alarm or --clear-alarms, not both")
+        }
+        alarmsUpdate = .some(nil)
+      }
+
       let completeFlag = values.flag("complete")
       let incompleteFlag = values.flag("incomplete")
       if completeFlag && incompleteFlag {
@@ -175,7 +194,8 @@ enum EditCommand {
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
       if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil
-        && recurrenceUpdate == nil && startDateUpdate == nil && timeZoneUpdate == nil && isCompleted == nil
+        && recurrenceUpdate == nil && startDateUpdate == nil && timeZoneUpdate == nil
+        && alarmsUpdate == nil && isCompleted == nil
       {
         throw RemindCoreError.operationFailed("No changes specified")
       }
@@ -193,6 +213,7 @@ enum EditCommand {
         timeZone: timeZoneUpdate,
         priority: priority,
         recurrence: recurrenceUpdate,
+        alarms: alarmsUpdate,
         listName: listName,
         isCompleted: isCompleted
       )

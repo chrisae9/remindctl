@@ -66,6 +66,12 @@ enum AddCommand {
               help: "IANA timezone (e.g. America/New_York)",
               parsing: .singleValue
             ),
+            .make(
+              label: "alarm",
+              names: [.long("alarm")],
+              help: "Alarm: -15m, -1h, -1d, 0, or date (repeatable)",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -116,6 +122,7 @@ enum AddCommand {
       }
       let startDate = try values.option("startDate").map(CommandHelpers.parseDueDate)
       let timeZone = try values.option("timezone").map(CommandHelpers.parseTimeZone)
+      let alarms = try values.optionValues("alarm").map(CommandHelpers.parseAlarm)
 
       let store = RemindersStore()
       try await store.requestAccess()
@@ -132,7 +139,8 @@ enum AddCommand {
 
       let draft = ReminderDraft(
         title: title, notes: notes, dueDate: dueDate, startDate: startDate,
-        timeZone: timeZone, priority: priority, recurrence: recurrence)
+        timeZone: timeZone, priority: priority, recurrence: recurrence,
+        alarms: alarms)
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }

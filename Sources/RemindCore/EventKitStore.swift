@@ -128,6 +128,7 @@ public actor RemindersStore {
     if let recurrence = draft.recurrence {
       applyRecurrence(recurrence, to: reminder)
     }
+    applyAlarms(draft.alarms, to: reminder)
     do {
       try eventStore.save(reminder, commit: true)
     } catch {
@@ -144,6 +145,7 @@ public actor RemindersStore {
       startDate: date(from: reminder.startDateComponents),
       timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceRule(from: reminder),
+      alarms: extractAlarms(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -187,6 +189,14 @@ public actor RemindersStore {
         clearRecurrence(from: reminder)
       }
     }
+    if let alarmsUpdate = update.alarms {
+      if let alarms = alarmsUpdate {
+        reminder.alarms?.forEach { reminder.removeAlarm($0) }
+        applyAlarms(alarms, to: reminder)
+      } else {
+        reminder.alarms?.forEach { reminder.removeAlarm($0) }
+      }
+    }
     if let listName = update.listName {
       reminder.calendar = try calendar(named: listName)
     }
@@ -211,6 +221,7 @@ public actor RemindersStore {
       startDate: date(from: reminder.startDateComponents),
       timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceRule(from: reminder),
+      alarms: extractAlarms(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -238,6 +249,7 @@ public actor RemindersStore {
           startDate: date(from: reminder.startDateComponents),
           timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
           recurrence: recurrenceRule(from: reminder),
+          alarms: extractAlarms(from: reminder),
           listID: reminder.calendar.calendarIdentifier,
           listName: reminder.calendar.title
         )
@@ -284,6 +296,7 @@ public actor RemindersStore {
       let startDateComponents: DateComponents?
       let timeZone: String?
       let recurrence: RecurrenceRule?
+      let alarms: [ReminderAlarm]
       let listID: String
       let listName: String
     }
@@ -331,6 +344,14 @@ public actor RemindersStore {
             )
           }()
           let tz = reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier
+          let alarms: [ReminderAlarm] = (reminder.alarms ?? []).compactMap { ekAlarm in
+            if let absDate = ekAlarm.absoluteDate {
+              return ReminderAlarm(absoluteDate: absDate)
+            } else if ekAlarm.relativeOffset != 0 || ekAlarm.absoluteDate == nil {
+              return ReminderAlarm(relativeOffset: ekAlarm.relativeOffset)
+            }
+            return nil
+          }
           return ReminderData(
             id: reminder.calendarItemIdentifier,
             title: reminder.title ?? "",
@@ -342,6 +363,7 @@ public actor RemindersStore {
             startDateComponents: reminder.startDateComponents,
             timeZone: tz,
             recurrence: recurrence,
+            alarms: alarms,
             listID: reminder.calendar.calendarIdentifier,
             listName: reminder.calendar.title
           )
@@ -362,6 +384,7 @@ public actor RemindersStore {
         startDate: date(from: data.startDateComponents),
         timeZone: data.timeZone,
         recurrence: data.recurrence,
+        alarms: data.alarms,
         listID: data.listID,
         listName: data.listName
       )
@@ -469,6 +492,26 @@ public actor RemindersStore {
     reminder.recurrenceRules?.forEach { reminder.removeRecurrenceRule($0) }
   }
 
+  private func extractAlarms(from reminder: EKReminder) -> [ReminderAlarm] {
+    (reminder.alarms ?? []).compactMap { ekAlarm in
+      if let absDate = ekAlarm.absoluteDate {
+        return ReminderAlarm(absoluteDate: absDate)
+      }
+      return ReminderAlarm(relativeOffset: ekAlarm.relativeOffset)
+    }
+  }
+
+  private func applyAlarms(_ alarms: [ReminderAlarm], to reminder: EKReminder) {
+    for alarm in alarms {
+      switch alarm.type {
+      case .absolute(let date):
+        reminder.addAlarm(EKAlarm(absoluteDate: date))
+      case .relative(let offset):
+        reminder.addAlarm(EKAlarm(relativeOffset: offset))
+      }
+    }
+  }
+
   private func calendarComponents(from date: Date) -> DateComponents {
     calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
   }
@@ -490,6 +533,7 @@ public actor RemindersStore {
       startDate: date(from: reminder.startDateComponents),
       timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceRule(from: reminder),
+      alarms: extractAlarms(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )

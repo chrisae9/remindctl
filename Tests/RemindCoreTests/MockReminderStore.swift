@@ -82,6 +82,7 @@ actor MockReminderStore: ReminderStoreProtocol {
       startDate: draft.startDate,
       timeZone: draft.timeZone,
       recurrence: draft.recurrence,
+      alarms: draft.alarms,
       listID: listID,
       listName: listName
     )
@@ -124,6 +125,13 @@ actor MockReminderStore: ReminderStoreProtocol {
       newTimeZone = existing.timeZone
     }
 
+    let newAlarms: [ReminderAlarm]
+    if let alarmsUpdate = update.alarms {
+      newAlarms = alarmsUpdate ?? []
+    } else {
+      newAlarms = existing.alarms
+    }
+
     let newListName = update.listName ?? existing.listName
     let newListID: String
     if update.listName != nil {
@@ -146,6 +154,7 @@ actor MockReminderStore: ReminderStoreProtocol {
       startDate: newStartDate,
       timeZone: newTimeZone,
       recurrence: newRecurrence,
+      alarms: newAlarms,
       listID: newListID,
       listName: newListName
     )
@@ -171,6 +180,7 @@ actor MockReminderStore: ReminderStoreProtocol {
         startDate: existing.startDate,
         timeZone: existing.timeZone,
         recurrence: existing.recurrence,
+        alarms: existing.alarms,
         listID: existing.listID,
         listName: existing.listName
       )

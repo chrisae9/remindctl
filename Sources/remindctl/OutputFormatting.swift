@@ -54,7 +54,8 @@ enum OutputRenderer {
       let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
       let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
       let recurrence = reminder.recurrence.map { " repeats=\(formatRecurrence($0))" } ?? ""
-      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)\(start)\(tz)\(recurrence)")
+      let alarms = reminder.alarms.isEmpty ? "" : " alarms=[\(reminder.alarms.map(formatAlarm).joined(separator: ", "))]"
+      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)\(start)\(tz)\(recurrence)\(alarms)")
     case .plain:
       Swift.print(plainLine(for: reminder))
     case .json:
@@ -104,8 +105,9 @@ enum OutputRenderer {
       let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
       let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
       let recurrence = reminder.recurrence.map { " repeats=\(formatRecurrence($0))" } ?? ""
+      let alarms = reminder.alarms.isEmpty ? "" : " alarms=[\(reminder.alarms.map(formatAlarm).joined(separator: ", "))]"
       Swift.print(
-        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(start)\(tz)\(recurrence)"
+        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(start)\(tz)\(recurrence)\(alarms)"
       )
     }
   }
@@ -179,6 +181,21 @@ enum OutputRenderer {
       desc += " \(count)x"
     }
     return desc
+  }
+
+  private static func formatAlarm(_ alarm: ReminderAlarm) -> String {
+    switch alarm.type {
+    case .absolute(let date):
+      return DateParsing.formatDisplay(date)
+    case .relative(let offset):
+      let secs = Int(offset)
+      if secs == 0 { return "0" }
+      let absSecs = abs(secs)
+      let sign = secs < 0 ? "-" : "+"
+      if absSecs % 86400 == 0 { return "\(sign)\(absSecs / 86400)d" }
+      if absSecs % 3600 == 0 { return "\(sign)\(absSecs / 3600)h" }
+      return "\(sign)\(absSecs / 60)m"
+    }
   }
 
   private static func isoFormatter() -> ISO8601DateFormatter {
