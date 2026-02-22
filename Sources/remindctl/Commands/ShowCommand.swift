@@ -23,7 +23,13 @@ enum ShowCommand {
               names: [.short("l"), .long("list")],
               help: "Limit to a specific list",
               parsing: .singleValue
-            )
+            ),
+            .make(
+              label: "search",
+              names: [.short("s"), .long("search")],
+              help: "Filter by text in title or notes",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -33,9 +39,11 @@ enum ShowCommand {
         "remindctl show overdue",
         "remindctl show 2026-01-04",
         "remindctl show --list Work",
+        "remindctl show all --search milk",
       ]
     ) { values, runtime in
       let listName = values.option("list")
+      let searchQuery = values.option("search")
       let filterToken = values.argument(0)
 
       let filter: ReminderFilter
@@ -51,7 +59,10 @@ enum ShowCommand {
       let store = RemindersStore()
       try await store.requestAccess()
       let reminders = try await store.reminders(in: listName)
-      let filtered = ReminderFiltering.apply(reminders, filter: filter)
+      var filtered = ReminderFiltering.apply(reminders, filter: filter)
+      if let query = searchQuery {
+        filtered = ReminderFiltering.search(filtered, query: query)
+      }
       OutputRenderer.printReminders(filtered, format: runtime.outputFormat)
     }
   }

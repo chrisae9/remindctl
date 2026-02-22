@@ -136,6 +136,40 @@ struct ReminderFilteringTests {
     #expect(result.count == items.count)
   }
 
+  @Test("Search matches title case-insensitively")
+  func searchTitle() {
+    let now = Date(timeIntervalSince1970: 1_700_000_000)
+    let items = reminders(now: now)
+    let result = ReminderFiltering.search(items, query: "today")
+    #expect(result.count == 1)
+    #expect(result.first?.title == "Today")
+  }
+
+  @Test("Search matches notes")
+  func searchNotes() {
+    let item = ReminderItem(
+      id: "10",
+      title: "Groceries",
+      notes: "Buy milk and eggs",
+      isCompleted: false,
+      completionDate: nil,
+      priority: .none,
+      dueDate: nil,
+      listID: "a",
+      listName: "Home"
+    )
+    let result = ReminderFiltering.search([item], query: "milk")
+    #expect(result.count == 1)
+  }
+
+  @Test("Search returns empty when no match")
+  func searchNoMatch() {
+    let now = Date(timeIntervalSince1970: 1_700_000_000)
+    let items = reminders(now: now)
+    let result = ReminderFiltering.search(items, query: "zzzznotfound")
+    #expect(result.isEmpty)
+  }
+
   @Test("Sort orders by due date then title")
   func sortOrder() {
     let now = Date(timeIntervalSince1970: 1_700_000_000)

@@ -93,6 +93,14 @@ public enum ReminderFiltering {
     }
   }
 
+  public static func search(_ reminders: [ReminderItem], query: String) -> [ReminderItem] {
+    let lowered = query.lowercased()
+    return reminders.filter { reminder in
+      reminder.title.lowercased().contains(lowered)
+        || (reminder.notes?.lowercased().contains(lowered) ?? false)
+    }
+  }
+
   public static func sort(_ reminders: [ReminderItem]) -> [ReminderItem] {
     reminders.sorted { lhs, rhs in
       switch (lhs.dueDate, rhs.dueDate) {
