@@ -7,7 +7,14 @@ enum DeleteCommand {
     CommandSpec(
       name: "delete",
       abstract: "Delete reminders",
-      discussion: "Use indexes or ID prefixes from show output.",
+      discussion: """
+        Permanently delete one or more reminders. IDs are 1-based index numbers from
+        'remindctl show' output or 4+ character UUID prefixes.
+
+        Prompts for confirmation unless --force or --no-input is set.
+        Use --dry-run to preview which reminders would be deleted without removing them.
+        Returns a JSON object with "deleted" count when using --json.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -20,9 +27,10 @@ enum DeleteCommand {
         )
       ),
       usageExamples: [
-        "remindctl delete 1",
-        "remindctl delete 4A83",
+        "remindctl delete 1 --force --json",
+        "remindctl delete 4A83 --no-input",
         "remindctl delete 1 2 3 --force",
+        "remindctl delete 1 --dry-run",
       ]
     ) { values, runtime in
       let inputs = values.positional

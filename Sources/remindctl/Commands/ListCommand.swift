@@ -7,7 +7,17 @@ enum ListCommand {
     CommandSpec(
       name: "list",
       abstract: "List reminder lists or show list contents",
-      discussion: "Without a name, shows all lists. With a name, shows reminders in that list.",
+      discussion: """
+        Without arguments, shows all reminder lists with reminder counts and overdue counts.
+        With a name argument, shows all reminders in that list.
+
+        Management operations: --create to create a new list, --delete to remove a list,
+        --rename <new-name> to rename. Deletion prompts for confirmation unless --force
+        or --no-input is set.
+
+        Aliases: 'lists', 'ls'. JSON output for list summaries includes: id, title,
+        reminderCount, overdueCount.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -29,11 +39,11 @@ enum ListCommand {
         )
       ),
       usageExamples: [
-        "remindctl list",
-        "remindctl list Work",
+        "remindctl list --json",
+        "remindctl list Work --json",
         "remindctl list Work --rename Office",
-        "remindctl list Work --delete",
-        "remindctl list Projects --create",
+        "remindctl list Work --delete --force",
+        "remindctl list Projects --create --json",
       ]
     ) { values, runtime in
       let name = values.argument(0)

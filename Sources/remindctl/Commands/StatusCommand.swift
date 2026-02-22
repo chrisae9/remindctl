@@ -7,7 +7,14 @@ enum StatusCommand {
     CommandSpec(
       name: "status",
       abstract: "Show Reminders authorization status",
-      discussion: "Reports the current Reminders permission state without prompting.",
+      discussion: """
+        Reports the current Reminders permission state without triggering a prompt.
+        States: fullAccess, writeOnly, denied, restricted, notDetermined.
+
+        JSON output: {"status": "<state>", "authorized": true|false}.
+        Exit code is 0 regardless of state. Check 'authorized' for programmatic use.
+        If not authorized, run 'remindctl authorize' first.
+        """,
       signature: CommandSignatures.withRuntimeFlags(CommandSignature()),
       usageExamples: [
         "remindctl status",

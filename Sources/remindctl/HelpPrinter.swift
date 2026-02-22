@@ -19,15 +19,54 @@ struct HelpPrinter {
     lines.append("\(rootName) \(version)")
     lines.append("Manage Apple Reminders from the terminal")
     lines.append("")
+    lines.append("AUTOMATION: Use --json for structured output, --no-input to disable prompts.")
+    lines.append("")
     lines.append("Usage:")
     lines.append("  \(rootName) [command] [options]")
+    lines.append("  \(rootName) [filter]                Shortcut for 'show <filter>'")
     lines.append("")
+
     lines.append("Commands:")
+    let maxLen = commands.map(\.name.count).max() ?? 0
     for command in commands {
-      lines.append("  \(command.name)\t\(command.abstract)")
+      let pad = String(repeating: " ", count: maxLen - command.name.count + 2)
+      lines.append("  \(command.name)\(pad)\(command.abstract)")
     }
     lines.append("")
-    lines.append("Run '\(rootName) <command> --help' for details.")
+
+    lines.append("Aliases: lists|ls → list, rm → delete, done → complete")
+    lines.append("")
+
+    lines.append("Filters (usable as top-level shortcuts):")
+    lines.append("  today, tomorrow, week, overdue, upcoming, open, completed, all, <date>")
+    lines.append("")
+
+    lines.append("Output Formats:")
+    lines.append("  --json       Machine-readable JSON (recommended for automation)")
+    lines.append("  --plain      Tab-separated lines (stable for parsing)")
+    lines.append("  --quiet      Counts only")
+    lines.append("  --no-input   Disable interactive prompts (required for automation)")
+    lines.append("  --no-color   Disable colored output")
+    lines.append("")
+
+    lines.append("ID Resolution (edit, complete, delete):")
+    lines.append("  Index numbers from show output (1, 2, 3) or 4+ char UUID prefixes (4A83).")
+    lines.append("  Run '\(rootName) show --json' first to see IDs.")
+    lines.append("")
+
+    lines.append("Date Formats (--due, --start-date, filters):")
+    lines.append("  today, tomorrow, yesterday, now, YYYY-MM-DD, \"YYYY-MM-DD HH:mm\", ISO 8601")
+    lines.append("")
+
+    lines.append("Typical Workflow:")
+    lines.append("  1. \(rootName) authorize              Grant permission (first run)")
+    lines.append("  2. \(rootName) --json                  List today's reminders as JSON")
+    lines.append("  3. \(rootName) add \"Buy milk\" --json   Create a reminder")
+    lines.append("  4. \(rootName) edit 1 --due tomorrow   Modify by index from show output")
+    lines.append("  5. \(rootName) complete 1              Mark done")
+    lines.append("")
+
+    lines.append("Run '\(rootName) <command> --help' for details on a specific command.")
     return lines
   }
 
@@ -36,7 +75,11 @@ struct HelpPrinter {
     lines.append("\(rootName) \(spec.name)")
     lines.append(spec.abstract)
     if let discussion = spec.discussion, !discussion.isEmpty {
-      lines.append("\n\(discussion)")
+      lines.append("")
+      for line in discussion.split(separator: "\n", omittingEmptySubsequences: false) {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        lines.append(trimmed.isEmpty ? "" : trimmed)
+      }
     }
     lines.append("")
     lines.append("Usage:")
@@ -45,9 +88,12 @@ struct HelpPrinter {
 
     if !spec.signature.arguments.isEmpty {
       lines.append("Arguments:")
+      let maxArgLen = spec.signature.arguments.map { $0.label.count + ($0.isOptional ? 1 : 0) }.max() ?? 0
       for arg in spec.signature.arguments {
         let optionalMark = arg.isOptional ? "?" : ""
-        lines.append("  \(arg.label)\(optionalMark)\t\(arg.help ?? "")")
+        let label = "\(arg.label)\(optionalMark)"
+        let pad = String(repeating: " ", count: maxArgLen - label.count + 2)
+        lines.append("  \(label)\(pad)\(arg.help ?? "")")
       }
       lines.append("")
     }
@@ -56,13 +102,17 @@ struct HelpPrinter {
     let flags = spec.signature.flags
     if !options.isEmpty || !flags.isEmpty {
       lines.append("Options:")
+      var entries: [(String, String)] = []
       for option in options {
-        let names = formatNames(option.names, expectsValue: true)
-        lines.append("  \(names)\t\(option.help ?? "")")
+        entries.append((formatNames(option.names, expectsValue: true), option.help ?? ""))
       }
       for flag in flags {
-        let names = formatNames(flag.names, expectsValue: false)
-        lines.append("  \(names)\t\(flag.help ?? "")")
+        entries.append((formatNames(flag.names, expectsValue: false), flag.help ?? ""))
+      }
+      let maxNameLen = entries.map(\.0.count).max() ?? 0
+      for (name, help) in entries {
+        let pad = String(repeating: " ", count: maxNameLen - name.count + 2)
+        lines.append("  \(name)\(pad)\(help)")
       }
       lines.append("")
     }

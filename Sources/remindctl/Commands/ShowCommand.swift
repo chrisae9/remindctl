@@ -7,7 +7,20 @@ enum ShowCommand {
     CommandSpec(
       name: "show",
       abstract: "Show reminders",
-      discussion: "Filters: today, tomorrow, week, overdue, upcoming, open, completed, all, or a date string.",
+      discussion: """
+        Show reminders matching a filter. Default filter is 'today' (includes overdue).
+
+        Filters: today, tomorrow, week, overdue, upcoming, open, completed, all.
+        Date filters: YYYY-MM-DD, "YYYY-MM-DD HH:mm", ISO 8601, today, tomorrow.
+        Filters can be top-level shortcuts: 'remindctl today' = 'remindctl show today'.
+
+        --list limits results to a named list. --search filters by substring in title or notes.
+
+        JSON output fields per reminder: id, title, notes, isCompleted, completionDate,
+        priority (none|low|medium|high), dueDate, startDate, timeZone, recurrence, alarms,
+        listID, listName. Dates are ISO 8601. Indexes shown in standard output are 1-based
+        and match the IDs accepted by edit, complete, and delete.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -37,9 +50,10 @@ enum ShowCommand {
         "remindctl",
         "remindctl today",
         "remindctl show overdue",
-        "remindctl show 2026-01-04",
-        "remindctl show --list Work",
+        "remindctl show --json",
+        "remindctl show all --list Work --json",
         "remindctl show all --search milk",
+        "remindctl show 2026-01-04",
       ]
     ) { values, runtime in
       let listName = values.option("list")

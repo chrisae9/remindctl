@@ -7,7 +7,26 @@ enum AddCommand {
     CommandSpec(
       name: "add",
       abstract: "Add a reminder",
-      discussion: "Provide a title as an argument or via --title.",
+      discussion: """
+        Create a new reminder. Title can be a positional argument or --title (not both).
+        Without --list, uses the default Reminders list. In non-TTY/automation mode,
+        title must be provided via argument or --title (no interactive prompt).
+
+        Date formats (--due, --start-date): today, tomorrow, YYYY-MM-DD,
+        "YYYY-MM-DD HH:mm", ISO 8601.
+        Priority: none (default), low, medium, high.
+        Recurrence: daily, weekly, monthly, yearly, 2-weekly, "every 3 months".
+          --recurrence-days: comma-separated days (mon,tue,wed,thu,fri,sat,sun).
+          --recurrence-month-days: comma-separated day numbers (1,15,-1 for last).
+          --recurrence-months: comma-separated months (jan,jul or 1,7).
+          --recurrence-end: date string or Nx for count (e.g. 10x).
+        Alarm (repeatable): -15m, -1h, -1d, 0 (at due time), or absolute date.
+        Location alarm (repeatable): "title:lat,lng:radius:enter|leave".
+          Default radius is meters, default proximity is enter.
+        Timezone: IANA identifier (e.g. America/New_York, Europe/London).
+
+        Returns the created reminder. Use --json for structured output.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -82,9 +101,12 @@ enum AddCommand {
         )
       ),
       usageExamples: [
-        "remindctl add \"Buy milk\"",
+        "remindctl add \"Buy milk\" --json",
         "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
-        "remindctl add \"Review docs\" --priority high",
+        "remindctl add \"Review docs\" --priority high --due 2026-03-01",
+        "remindctl add \"Standup\" --due tomorrow --recurrence daily --alarm -15m",
+        "remindctl add \"Biweekly\" --recurrence 2-weekly --recurrence-days mon,fri",
+        "remindctl add \"Leave home\" --location-alarm \"Home:37.77,-122.42:100:leave\"",
       ]
     ) { values, runtime in
       let titleOption = values.option("title")

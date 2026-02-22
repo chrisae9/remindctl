@@ -7,7 +7,14 @@ enum CompleteCommand {
     CommandSpec(
       name: "complete",
       abstract: "Mark reminders complete",
-      discussion: "Use indexes or ID prefixes from show output.",
+      discussion: """
+        Mark one or more reminders as completed. IDs are 1-based index numbers from
+        'remindctl show' output or 4+ character UUID prefixes. Multiple IDs can be
+        specified as separate arguments.
+
+        Use --dry-run to preview which reminders would be completed without saving.
+        Returns the updated reminder(s). Use --json for structured output.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -19,9 +26,10 @@ enum CompleteCommand {
         )
       ),
       usageExamples: [
-        "remindctl complete 1",
+        "remindctl complete 1 --json",
         "remindctl complete 1 2 3",
         "remindctl complete 4A83",
+        "remindctl complete 1 --dry-run",
       ]
     ) { values, runtime in
       let inputs = values.positional

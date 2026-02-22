@@ -7,7 +7,12 @@ enum AuthorizeCommand {
     CommandSpec(
       name: "authorize",
       abstract: "Request Reminders access",
-      discussion: "Triggers the Reminders permission prompt when available.",
+      discussion: """
+        Triggers the macOS Reminders permission prompt if not yet determined.
+        If already authorized or denied, reports the current state without prompting.
+        Must run from a TTY for the system dialog to appear. After granting access,
+        all other commands will work. Exits with code 0 on fullAccess, non-zero otherwise.
+        """,
       signature: CommandSignatures.withRuntimeFlags(CommandSignature()),
       usageExamples: [
         "remindctl authorize",

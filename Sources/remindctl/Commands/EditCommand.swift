@@ -7,7 +7,21 @@ enum EditCommand {
     CommandSpec(
       name: "edit",
       abstract: "Edit one or more reminders",
-      discussion: "Use indexes or ID prefixes from the show output. Applies the same changes to all specified reminders.",
+      discussion: """
+        Edit one or more reminders by index or ID prefix. All specified reminders
+        receive the same changes. Get indexes from 'remindctl show' output (1-based)
+        or use 4+ character UUID prefixes from the id field.
+
+        Clear optional fields with --clear-due, --clear-recurrence, --clear-start-date,
+        --clear-timezone, --clear-alarms. A --clear flag and its setter cannot be combined.
+
+        All value formats (dates, priority, recurrence, alarms) are the same as 'add'.
+        See 'remindctl add --help' for format details.
+
+        Use --complete/--incomplete to change completion status.
+        Use --dry-run to preview which reminders would be affected without saving.
+        Returns the updated reminder(s). Use --json for structured output.
+        """,
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
@@ -93,11 +107,12 @@ enum EditCommand {
         )
       ),
       usageExamples: [
-        "remindctl edit 1 --title \"New title\"",
+        "remindctl edit 1 --title \"New title\" --json",
         "remindctl edit 4A83 --due tomorrow",
-        "remindctl edit 1 2 3 --priority high",
-        "remindctl edit 1 2 3 --list Work",
-        "remindctl edit 3 --clear-due",
+        "remindctl edit 1 2 3 --priority high --list Work",
+        "remindctl edit 3 --clear-due --clear-recurrence",
+        "remindctl edit 1 --recurrence weekly --alarm -15m",
+        "remindctl edit 2 --complete",
       ]
     ) { values, runtime in
       let inputs = values.positional
