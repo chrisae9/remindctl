@@ -44,9 +44,34 @@ public struct RecurrenceRule: Codable, Sendable, Equatable {
   }
 }
 
+public enum LocationProximity: String, Codable, Sendable, Equatable {
+  case enter
+  case leave
+}
+
+public struct LocationAlarm: Codable, Sendable, Equatable {
+  public let title: String
+  public let latitude: Double
+  public let longitude: Double
+  public let radius: Double
+  public let proximity: LocationProximity
+
+  public init(
+    title: String, latitude: Double, longitude: Double,
+    radius: Double = 100, proximity: LocationProximity = .enter
+  ) {
+    self.title = title
+    self.latitude = latitude
+    self.longitude = longitude
+    self.radius = radius
+    self.proximity = proximity
+  }
+}
+
 public enum AlarmType: Codable, Sendable, Equatable {
   case absolute(Date)
   case relative(TimeInterval)
+  case location(LocationAlarm)
 }
 
 public struct ReminderAlarm: Codable, Sendable, Equatable {
@@ -62,6 +87,10 @@ public struct ReminderAlarm: Codable, Sendable, Equatable {
 
   public init(relativeOffset: TimeInterval) {
     self.type = .relative(relativeOffset)
+  }
+
+  public init(location: LocationAlarm) {
+    self.type = .location(location)
   }
 }
 

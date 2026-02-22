@@ -432,4 +432,55 @@ struct ReminderStoreTests {
     #expect(item.alarms.count == 1)
     #expect(item.alarms[0] == ReminderAlarm(absoluteDate: alarmDate))
   }
+
+  // MARK: - Location Alarms
+
+  @Test("Create reminder with location alarm")
+  func createWithLocationAlarm() async throws {
+    let store = sampleStore()
+    let loc = LocationAlarm(
+      title: "Home", latitude: 37.7749, longitude: -122.4194,
+      radius: 100, proximity: .enter
+    )
+    let alarms = [ReminderAlarm(location: loc)]
+    let draft = ReminderDraft(
+      title: "Location", notes: nil, dueDate: nil, priority: .none, alarms: alarms
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.alarms.count == 1)
+    #expect(item.alarms[0] == ReminderAlarm(location: loc))
+  }
+
+  @Test("Create reminder with mixed alarms")
+  func createWithMixedAlarms() async throws {
+    let store = sampleStore()
+    let loc = LocationAlarm(
+      title: "Office", latitude: 40.7128, longitude: -74.006,
+      radius: 200, proximity: .leave
+    )
+    let alarms = [
+      ReminderAlarm(relativeOffset: -900),
+      ReminderAlarm(location: loc),
+    ]
+    let draft = ReminderDraft(
+      title: "Mixed", notes: nil, dueDate: Date(), priority: .none, alarms: alarms
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.alarms.count == 2)
+    #expect(item.alarms[0] == ReminderAlarm(relativeOffset: -900))
+    #expect(item.alarms[1] == ReminderAlarm(location: loc))
+  }
+
+  @Test("Update reminder with location alarm")
+  func updateWithLocationAlarm() async throws {
+    let store = sampleStore()
+    let loc = LocationAlarm(
+      title: "Gym", latitude: 34.0522, longitude: -118.2437,
+      radius: 150, proximity: .enter
+    )
+    let update = ReminderUpdate(alarms: .some([ReminderAlarm(location: loc)]))
+    let updated = try await store.updateReminder(id: "r1", update: update)
+    #expect(updated.alarms.count == 1)
+    #expect(updated.alarms[0] == ReminderAlarm(location: loc))
+  }
 }

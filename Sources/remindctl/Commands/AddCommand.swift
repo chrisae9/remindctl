@@ -72,6 +72,12 @@ enum AddCommand {
               help: "Alarm: -15m, -1h, -1d, 0, or date (repeatable)",
               parsing: .singleValue
             ),
+            .make(
+              label: "locationAlarm",
+              names: [.long("location-alarm")],
+              help: "Location alarm: \"title:lat,lng:radius:enter|leave\" (repeatable)",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -122,7 +128,8 @@ enum AddCommand {
       }
       let startDate = try values.option("startDate").map(CommandHelpers.parseDueDate)
       let timeZone = try values.option("timezone").map(CommandHelpers.parseTimeZone)
-      let alarms = try values.optionValues("alarm").map(CommandHelpers.parseAlarm)
+      var alarms = try values.optionValues("alarm").map(CommandHelpers.parseAlarm)
+      alarms += try values.optionValues("locationAlarm").map(CommandHelpers.parseLocationAlarm)
 
       let store = RemindersStore()
       try await store.requestAccess()

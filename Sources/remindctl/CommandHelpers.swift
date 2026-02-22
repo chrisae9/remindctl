@@ -209,4 +209,48 @@ enum CommandHelpers {
     throw RemindCoreError.operationFailed(
       "Invalid alarm: \"\(value)\" (use -15m, -1h, -1d, 0, or a date)")
   }
+
+  static func parseLocationAlarm(_ value: String) throws -> ReminderAlarm {
+    // Format: "title:lat,lng:radius:enter|leave"
+    let parts = value.split(separator: ":", maxSplits: 3).map(String.init)
+    guard parts.count >= 3 else {
+      throw RemindCoreError.operationFailed(
+        "Invalid location alarm: \"\(value)\" (use \"title:lat,lng:radius:enter|leave\")")
+    }
+
+    let title = parts[0]
+
+    let coords = parts[1].split(separator: ",").map(String.init)
+    guard coords.count == 2,
+      let lat = Double(coords[0].trimmingCharacters(in: .whitespaces)),
+      let lng = Double(coords[1].trimmingCharacters(in: .whitespaces))
+    else {
+      throw RemindCoreError.operationFailed(
+        "Invalid coordinates in location alarm: \"\(parts[1])\" (use lat,lng)")
+    }
+
+    guard let radius = Double(parts[2].trimmingCharacters(in: .whitespaces)), radius > 0 else {
+      throw RemindCoreError.operationFailed(
+        "Invalid radius in location alarm: \"\(parts[2])\" (use positive number in meters)")
+    }
+
+    let proximity: LocationProximity
+    if parts.count >= 4 {
+      switch parts[3].lowercased().trimmingCharacters(in: .whitespaces) {
+      case "enter": proximity = .enter
+      case "leave": proximity = .leave
+      default:
+        throw RemindCoreError.operationFailed(
+          "Invalid proximity: \"\(parts[3])\" (use enter|leave)")
+      }
+    } else {
+      proximity = .enter
+    }
+
+    return ReminderAlarm(
+      location: LocationAlarm(
+        title: title, latitude: lat, longitude: lng,
+        radius: radius, proximity: proximity
+      ))
+  }
 }

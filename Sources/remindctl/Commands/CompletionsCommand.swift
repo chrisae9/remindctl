@@ -63,10 +63,10 @@ enum CompletionsCommand {
                 fi
                 ;;
             add)
-                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --recurrence-days --recurrence-month-days --recurrence-months --recurrence-end --start-date --timezone --alarm --json --plain --quiet" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --recurrence-days --recurrence-month-days --recurrence-months --recurrence-end --start-date --timezone --alarm --location-alarm --json --plain --quiet" -- "${cur}") )
                 ;;
             edit)
-                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --recurrence-days --recurrence-month-days --recurrence-months --recurrence-end --start-date --timezone --alarm --clear-due --clear-recurrence --clear-start-date --clear-timezone --clear-alarms --complete --incomplete --json --plain --quiet" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --recurrence-days --recurrence-month-days --recurrence-months --recurrence-end --start-date --timezone --alarm --location-alarm --clear-due --clear-recurrence --clear-start-date --clear-timezone --clear-alarms --complete --incomplete --json --plain --quiet" -- "${cur}") )
                 ;;
             list)
                 COMPREPLY=( $(compgen -W "--rename --delete --create --force --json --plain --quiet" -- "${cur}") )
@@ -158,6 +158,7 @@ enum CompletionsCommand {
                             '--start-date[Start date]:date:' \\
                             '--timezone[IANA timezone]:timezone:' \\
                             '*--alarm[Alarm]:alarm spec:' \\
+                            '*--location-alarm[Location alarm]:location alarm spec:' \\
                             '(-j --json)'{-j,--json}'[JSON output]' \\
                             '--plain[Plain output]' \\
                             '(-q --quiet)'{-q,--quiet}'[Quiet output]'
@@ -180,6 +181,7 @@ enum CompletionsCommand {
                             '--clear-due[Clear due date]' \\
                             '--clear-recurrence[Clear recurrence]' \\
                             '*--alarm[Alarm]:alarm spec:' \\
+                            '*--location-alarm[Location alarm]:location alarm spec:' \\
                             '--clear-start-date[Clear start date]' \\
                             '--clear-timezone[Clear timezone]' \\
                             '--clear-alarms[Remove all alarms]' \\
@@ -275,6 +277,7 @@ enum CompletionsCommand {
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l start-date -r -d "Start date"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l timezone -r -d "IANA timezone"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l alarm -r -d "Alarm"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l location-alarm -r -d "Location alarm"
 
     # edit
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l title -s t -r -d "New title"
@@ -292,6 +295,7 @@ enum CompletionsCommand {
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-due -d "Clear due date"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-recurrence -d "Clear recurrence"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l alarm -r -d "Alarm"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l location-alarm -r -d "Location alarm"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-start-date -d "Clear start date"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-timezone -d "Clear timezone"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-alarms -d "Remove all alarms"

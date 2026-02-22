@@ -195,6 +195,9 @@ enum OutputRenderer {
       if absSecs % 86400 == 0 { return "\(sign)\(absSecs / 86400)d" }
       if absSecs % 3600 == 0 { return "\(sign)\(absSecs / 3600)h" }
       return "\(sign)\(absSecs / 60)m"
+    case .location(let loc):
+      let proximity = loc.proximity == .enter ? "enter" : "leave"
+      return "\(loc.title):\(loc.latitude),\(loc.longitude):\(Int(loc.radius)):\(proximity)"
     }
   }
 

@@ -72,6 +72,12 @@ enum EditCommand {
               help: "Alarm: -15m, -1h, -1d, 0, or date (repeatable)",
               parsing: .singleValue
             ),
+            .make(
+              label: "locationAlarm",
+              names: [.long("location-alarm")],
+              help: "Location alarm: \"title:lat,lng:radius:enter|leave\" (repeatable)",
+              parsing: .singleValue
+            ),
           ],
           flags: [
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
@@ -176,8 +182,11 @@ enum EditCommand {
 
       var alarmsUpdate: [ReminderAlarm]??
       let alarmValues = values.optionValues("alarm")
-      if !alarmValues.isEmpty {
-        alarmsUpdate = try alarmValues.map(CommandHelpers.parseAlarm)
+      let locationAlarmValues = values.optionValues("locationAlarm")
+      if !alarmValues.isEmpty || !locationAlarmValues.isEmpty {
+        var alarms = try alarmValues.map(CommandHelpers.parseAlarm)
+        alarms += try locationAlarmValues.map(CommandHelpers.parseLocationAlarm)
+        alarmsUpdate = alarms
       }
       if values.flag("clearAlarms") {
         if alarmsUpdate != nil {

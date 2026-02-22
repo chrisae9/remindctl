@@ -17,6 +17,7 @@ let package = Package(
       dependencies: [],
       linkerSettings: [
         .linkedFramework("EventKit"),
+        .linkedFramework("CoreLocation"),
       ]
     ),
     .executableTarget(

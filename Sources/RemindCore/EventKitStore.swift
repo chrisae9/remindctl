@@ -1,3 +1,4 @@
+import CoreLocation
 import EventKit
 import Foundation
 
@@ -345,12 +346,23 @@ public actor RemindersStore {
           }()
           let tz = reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier
           let alarms: [ReminderAlarm] = (reminder.alarms ?? []).compactMap { ekAlarm in
+            if let structuredLoc = ekAlarm.structuredLocation,
+              let geoLocation = structuredLoc.geoLocation
+            {
+              let proximity: LocationProximity = ekAlarm.proximity == .leave ? .leave : .enter
+              let loc = LocationAlarm(
+                title: structuredLoc.title ?? "",
+                latitude: geoLocation.coordinate.latitude,
+                longitude: geoLocation.coordinate.longitude,
+                radius: structuredLoc.radius,
+                proximity: proximity
+              )
+              return ReminderAlarm(location: loc)
+            }
             if let absDate = ekAlarm.absoluteDate {
               return ReminderAlarm(absoluteDate: absDate)
-            } else if ekAlarm.relativeOffset != 0 || ekAlarm.absoluteDate == nil {
-              return ReminderAlarm(relativeOffset: ekAlarm.relativeOffset)
             }
-            return nil
+            return ReminderAlarm(relativeOffset: ekAlarm.relativeOffset)
           }
           return ReminderData(
             id: reminder.calendarItemIdentifier,
@@ -494,6 +506,19 @@ public actor RemindersStore {
 
   private func extractAlarms(from reminder: EKReminder) -> [ReminderAlarm] {
     (reminder.alarms ?? []).compactMap { ekAlarm in
+      if let structuredLoc = ekAlarm.structuredLocation,
+        let geoLocation = structuredLoc.geoLocation
+      {
+        let proximity: LocationProximity = ekAlarm.proximity == .leave ? .leave : .enter
+        let loc = LocationAlarm(
+          title: structuredLoc.title ?? "",
+          latitude: geoLocation.coordinate.latitude,
+          longitude: geoLocation.coordinate.longitude,
+          radius: structuredLoc.radius,
+          proximity: proximity
+        )
+        return ReminderAlarm(location: loc)
+      }
       if let absDate = ekAlarm.absoluteDate {
         return ReminderAlarm(absoluteDate: absDate)
       }
@@ -508,6 +533,14 @@ public actor RemindersStore {
         reminder.addAlarm(EKAlarm(absoluteDate: date))
       case .relative(let offset):
         reminder.addAlarm(EKAlarm(relativeOffset: offset))
+      case .location(let loc):
+        let ekAlarm = EKAlarm()
+        let structuredLoc = EKStructuredLocation(title: loc.title)
+        structuredLoc.geoLocation = CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+        structuredLoc.radius = loc.radius
+        ekAlarm.structuredLocation = structuredLoc
+        ekAlarm.proximity = loc.proximity == .leave ? .leave : .enter
+        reminder.addAlarm(ekAlarm)
       }
     }
   }
