@@ -51,8 +51,10 @@ enum OutputRenderer {
     switch format {
     case .standard:
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
+      let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
       let recurrence = reminder.recurrence.map { " repeats=\($0.rawValue)" } ?? ""
-      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)\(recurrence)")
+      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)\(start)\(tz)\(recurrence)")
     case .plain:
       Swift.print(plainLine(for: reminder))
     case .json:
@@ -99,9 +101,11 @@ enum OutputRenderer {
       let status = reminder.isCompleted ? "x" : " "
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
+      let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
+      let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
       let recurrence = reminder.recurrence.map { " repeats=\($0.rawValue)" } ?? ""
       Swift.print(
-        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(recurrence)"
+        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(start)\(tz)\(recurrence)"
       )
     }
   }

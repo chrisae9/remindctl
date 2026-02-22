@@ -79,6 +79,8 @@ actor MockReminderStore: ReminderStoreProtocol {
       completionDate: nil,
       priority: draft.priority,
       dueDate: draft.dueDate,
+      startDate: draft.startDate,
+      timeZone: draft.timeZone,
       recurrence: draft.recurrence,
       listID: listID,
       listName: listName
@@ -108,6 +110,20 @@ actor MockReminderStore: ReminderStoreProtocol {
       newRecurrence = existing.recurrence
     }
 
+    let newStartDate: Date?
+    if let startDateUpdate = update.startDate {
+      newStartDate = startDateUpdate
+    } else {
+      newStartDate = existing.startDate
+    }
+
+    let newTimeZone: String?
+    if let timeZoneUpdate = update.timeZone {
+      newTimeZone = timeZoneUpdate
+    } else {
+      newTimeZone = existing.timeZone
+    }
+
     let newListName = update.listName ?? existing.listName
     let newListID: String
     if update.listName != nil {
@@ -127,6 +143,8 @@ actor MockReminderStore: ReminderStoreProtocol {
       completionDate: existing.completionDate,
       priority: update.priority ?? existing.priority,
       dueDate: newDueDate,
+      startDate: newStartDate,
+      timeZone: newTimeZone,
       recurrence: newRecurrence,
       listID: newListID,
       listName: newListName
@@ -150,6 +168,8 @@ actor MockReminderStore: ReminderStoreProtocol {
         completionDate: Date(),
         priority: existing.priority,
         dueDate: existing.dueDate,
+        startDate: existing.startDate,
+        timeZone: existing.timeZone,
         recurrence: existing.recurrence,
         listID: existing.listID,
         listName: existing.listName

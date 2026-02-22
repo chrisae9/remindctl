@@ -259,4 +259,68 @@ struct ReminderStoreTests {
       #expect(error is RemindCoreError)
     }
   }
+
+  // MARK: - Start Date & Timezone
+
+  @Test("Create reminder with start date")
+  func createWithStartDate() async throws {
+    let store = sampleStore()
+    let startDate = Date(timeIntervalSince1970: 1_700_000_000)
+    let draft = ReminderDraft(
+      title: "With start", notes: nil, dueDate: nil,
+      startDate: startDate, priority: .none
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.startDate == startDate)
+  }
+
+  @Test("Create reminder with timezone")
+  func createWithTimezone() async throws {
+    let store = sampleStore()
+    let draft = ReminderDraft(
+      title: "With tz", notes: nil, dueDate: Date(),
+      timeZone: "America/New_York", priority: .none
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.timeZone == "America/New_York")
+  }
+
+  @Test("Update reminder start date")
+  func updateStartDate() async throws {
+    let store = sampleStore()
+    let newStart = Date(timeIntervalSince1970: 1_800_000_000)
+    let update = ReminderUpdate(startDate: .some(newStart))
+    let updated = try await store.updateReminder(id: "r1", update: update)
+    #expect(updated.startDate == newStart)
+  }
+
+  @Test("Clear reminder start date")
+  func clearStartDate() async throws {
+    let store = sampleStore()
+    // First set a start date
+    let setUpdate = ReminderUpdate(startDate: .some(Date()))
+    _ = try await store.updateReminder(id: "r1", update: setUpdate)
+    // Then clear it
+    let clearUpdate = ReminderUpdate(startDate: .some(nil))
+    let updated = try await store.updateReminder(id: "r1", update: clearUpdate)
+    #expect(updated.startDate == nil)
+  }
+
+  @Test("Update reminder timezone")
+  func updateTimezone() async throws {
+    let store = sampleStore()
+    let update = ReminderUpdate(timeZone: .some("Europe/London"))
+    let updated = try await store.updateReminder(id: "r1", update: update)
+    #expect(updated.timeZone == "Europe/London")
+  }
+
+  @Test("Clear reminder timezone")
+  func clearTimezone() async throws {
+    let store = sampleStore()
+    let setUpdate = ReminderUpdate(timeZone: .some("US/Pacific"))
+    _ = try await store.updateReminder(id: "r1", update: setUpdate)
+    let clearUpdate = ReminderUpdate(timeZone: .some(nil))
+    let updated = try await store.updateReminder(id: "r1", update: clearUpdate)
+    #expect(updated.timeZone == nil)
+  }
 }

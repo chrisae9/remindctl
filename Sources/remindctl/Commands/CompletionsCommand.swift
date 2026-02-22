@@ -63,10 +63,10 @@ enum CompletionsCommand {
                 fi
                 ;;
             add)
-                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --json --plain --quiet" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --start-date --timezone --json --plain --quiet" -- "${cur}") )
                 ;;
             edit)
-                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --clear-due --clear-recurrence --complete --incomplete --json --plain --quiet" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --start-date --timezone --clear-due --clear-recurrence --clear-start-date --clear-timezone --complete --incomplete --json --plain --quiet" -- "${cur}") )
                 ;;
             list)
                 COMPREPLY=( $(compgen -W "--rename --delete --create --force --json --plain --quiet" -- "${cur}") )
@@ -151,6 +151,8 @@ enum CompletionsCommand {
                             '(-n --notes)'{-n,--notes}'[Notes]:notes:' \\
                             '(-p --priority)'{-p,--priority}'[Priority]:priority:(none low medium high)' \\
                             '(-r --recurrence)'{-r,--recurrence}'[Recurrence]:frequency:(daily weekly monthly yearly)' \\
+                            '--start-date[Start date]:date:' \\
+                            '--timezone[IANA timezone]:timezone:' \\
                             '(-j --json)'{-j,--json}'[JSON output]' \\
                             '--plain[Plain output]' \\
                             '(-q --quiet)'{-q,--quiet}'[Quiet output]'
@@ -164,8 +166,12 @@ enum CompletionsCommand {
                             '(-n --notes)'{-n,--notes}'[Set notes]:notes:' \\
                             '(-p --priority)'{-p,--priority}'[Priority]:priority:(none low medium high)' \\
                             '(-r --recurrence)'{-r,--recurrence}'[Recurrence]:frequency:(daily weekly monthly yearly)' \\
+                            '--start-date[Set start date]:date:' \\
+                            '--timezone[IANA timezone]:timezone:' \\
                             '--clear-due[Clear due date]' \\
                             '--clear-recurrence[Clear recurrence]' \\
+                            '--clear-start-date[Clear start date]' \\
+                            '--clear-timezone[Clear timezone]' \\
                             '--complete[Mark completed]' \\
                             '--incomplete[Mark incomplete]' \\
                             '(-j --json)'{-j,--json}'[JSON output]' \\
@@ -251,6 +257,8 @@ enum CompletionsCommand {
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l notes -s n -r -d "Notes"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l priority -s p -r -a "none low medium high" -d "Priority"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l recurrence -s r -r -a "daily weekly monthly yearly" -d "Recurrence"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l start-date -r -d "Start date"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l timezone -r -d "IANA timezone"
 
     # edit
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l title -s t -r -d "New title"
@@ -259,8 +267,12 @@ enum CompletionsCommand {
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l notes -s n -r -d "Notes"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l priority -s p -r -a "none low medium high" -d "Priority"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l recurrence -s r -r -a "daily weekly monthly yearly" -d "Recurrence"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l start-date -r -d "Start date"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l timezone -r -d "IANA timezone"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-due -d "Clear due date"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-recurrence -d "Clear recurrence"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-start-date -d "Clear start date"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-timezone -d "Clear timezone"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l complete -d "Mark completed"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l incomplete -d "Mark incomplete"
 

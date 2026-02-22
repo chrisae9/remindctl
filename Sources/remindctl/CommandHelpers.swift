@@ -39,4 +39,12 @@ enum CommandHelpers {
     }
     return date
   }
+
+  static func parseTimeZone(_ value: String) throws -> String {
+    guard TimeZone(identifier: value) != nil else {
+      throw RemindCoreError.operationFailed(
+        "Invalid timezone: \"\(value)\" (use IANA identifier, e.g. America/New_York)")
+    }
+    return value
+  }
 }

@@ -30,11 +30,25 @@ enum EditCommand {
               help: "daily|weekly|monthly|yearly",
               parsing: .singleValue
             ),
+            .make(
+              label: "startDate",
+              names: [.long("start-date")],
+              help: "Set start date",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "timezone",
+              names: [.long("timezone"), .long("tz")],
+              help: "IANA timezone (e.g. America/New_York)",
+              parsing: .singleValue
+            ),
           ],
           flags: [
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
             .make(
               label: "clearRecurrence", names: [.long("clear-recurrence")], help: "Clear recurrence"),
+            .make(label: "clearStartDate", names: [.long("clear-start-date")], help: "Clear start date"),
+            .make(label: "clearTimezone", names: [.long("clear-timezone")], help: "Clear timezone"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
             .make(label: "dryRun", names: [.long("dry-run")], help: "Preview without changes"),
@@ -90,6 +104,28 @@ enum EditCommand {
         recurrenceUpdate = .some(nil)
       }
 
+      var startDateUpdate: Date??
+      if let startDateValue = values.option("startDate") {
+        startDateUpdate = try CommandHelpers.parseDueDate(startDateValue)
+      }
+      if values.flag("clearStartDate") {
+        if startDateUpdate != nil {
+          throw RemindCoreError.operationFailed("Use either --start-date or --clear-start-date, not both")
+        }
+        startDateUpdate = .some(nil)
+      }
+
+      var timeZoneUpdate: String??
+      if let tzValue = values.option("timezone") {
+        timeZoneUpdate = try CommandHelpers.parseTimeZone(tzValue)
+      }
+      if values.flag("clearTimezone") {
+        if timeZoneUpdate != nil {
+          throw RemindCoreError.operationFailed("Use either --timezone or --clear-timezone, not both")
+        }
+        timeZoneUpdate = .some(nil)
+      }
+
       let completeFlag = values.flag("complete")
       let incompleteFlag = values.flag("incomplete")
       if completeFlag && incompleteFlag {
@@ -98,7 +134,7 @@ enum EditCommand {
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
       if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil
-        && recurrenceUpdate == nil && isCompleted == nil
+        && recurrenceUpdate == nil && startDateUpdate == nil && timeZoneUpdate == nil && isCompleted == nil
       {
         throw RemindCoreError.operationFailed("No changes specified")
       }
@@ -112,6 +148,8 @@ enum EditCommand {
         title: title,
         notes: notes,
         dueDate: dueUpdate,
+        startDate: startDateUpdate,
+        timeZone: timeZoneUpdate,
         priority: priority,
         recurrence: recurrenceUpdate,
         listName: listName,

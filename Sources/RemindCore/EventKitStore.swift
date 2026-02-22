@@ -117,6 +117,14 @@ public actor RemindersStore {
     if let dueDate = draft.dueDate {
       reminder.dueDateComponents = calendarComponents(from: dueDate)
     }
+    if let startDate = draft.startDate {
+      reminder.startDateComponents = calendarComponents(from: startDate)
+    }
+    if let tzID = draft.timeZone {
+      let tz = TimeZone(identifier: tzID)
+      reminder.dueDateComponents?.timeZone = tz
+      reminder.startDateComponents?.timeZone = tz
+    }
     if let recurrence = draft.recurrence {
       applyRecurrence(recurrence, to: reminder)
     }
@@ -133,6 +141,8 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      startDate: date(from: reminder.startDateComponents),
+      timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceFrequency(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
@@ -157,6 +167,18 @@ public actor RemindersStore {
     }
     if let priority = update.priority {
       reminder.priority = priority.eventKitValue
+    }
+    if let startDateUpdate = update.startDate {
+      if let startDate = startDateUpdate {
+        reminder.startDateComponents = calendarComponents(from: startDate)
+      } else {
+        reminder.startDateComponents = nil
+      }
+    }
+    if let timeZoneUpdate = update.timeZone {
+      let tz = timeZoneUpdate.flatMap { TimeZone(identifier: $0) }
+      reminder.dueDateComponents?.timeZone = tz
+      reminder.startDateComponents?.timeZone = tz
     }
     if let recurrenceUpdate = update.recurrence {
       if let recurrence = recurrenceUpdate {
@@ -186,6 +208,8 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      startDate: date(from: reminder.startDateComponents),
+      timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceFrequency(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
@@ -211,6 +235,8 @@ public actor RemindersStore {
           completionDate: reminder.completionDate,
           priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
           dueDate: date(from: reminder.dueDateComponents),
+          startDate: date(from: reminder.startDateComponents),
+          timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
           recurrence: recurrenceFrequency(from: reminder),
           listID: reminder.calendar.calendarIdentifier,
           listName: reminder.calendar.title
@@ -255,6 +281,8 @@ public actor RemindersStore {
       let completionDate: Date?
       let priority: Int
       let dueDateComponents: DateComponents?
+      let startDateComponents: DateComponents?
+      let timeZone: String?
       let recurrence: RecurrenceFrequency?
       let listID: String
       let listName: String
@@ -274,6 +302,7 @@ public actor RemindersStore {
             @unknown default: return nil
             }
           }()
+          let tz = reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier
           return ReminderData(
             id: reminder.calendarItemIdentifier,
             title: reminder.title ?? "",
@@ -282,6 +311,8 @@ public actor RemindersStore {
             completionDate: reminder.completionDate,
             priority: Int(reminder.priority),
             dueDateComponents: reminder.dueDateComponents,
+            startDateComponents: reminder.startDateComponents,
+            timeZone: tz,
             recurrence: recurrence,
             listID: reminder.calendar.calendarIdentifier,
             listName: reminder.calendar.title
@@ -300,6 +331,8 @@ public actor RemindersStore {
         completionDate: data.completionDate,
         priority: ReminderPriority(eventKitValue: data.priority),
         dueDate: date(from: data.dueDateComponents),
+        startDate: date(from: data.startDateComponents),
+        timeZone: data.timeZone,
         recurrence: data.recurrence,
         listID: data.listID,
         listName: data.listName
@@ -372,6 +405,8 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      startDate: date(from: reminder.startDateComponents),
+      timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceFrequency(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title

@@ -30,6 +30,18 @@ enum AddCommand {
               help: "daily|weekly|monthly|yearly",
               parsing: .singleValue
             ),
+            .make(
+              label: "startDate",
+              names: [.long("start-date")],
+              help: "Start date",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "timezone",
+              names: [.long("timezone"), .long("tz")],
+              help: "IANA timezone (e.g. America/New_York)",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -67,6 +79,8 @@ enum AddCommand {
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
       let recurrenceValue = values.option("recurrence")
       let recurrence = try recurrenceValue.map(CommandHelpers.parseRecurrence)
+      let startDate = try values.option("startDate").map(CommandHelpers.parseDueDate)
+      let timeZone = try values.option("timezone").map(CommandHelpers.parseTimeZone)
 
       let store = RemindersStore()
       try await store.requestAccess()
@@ -82,7 +96,8 @@ enum AddCommand {
       }
 
       let draft = ReminderDraft(
-        title: title, notes: notes, dueDate: dueDate, priority: priority, recurrence: recurrence)
+        title: title, notes: notes, dueDate: dueDate, startDate: startDate,
+        timeZone: timeZone, priority: priority, recurrence: recurrence)
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }
