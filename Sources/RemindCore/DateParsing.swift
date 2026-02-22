@@ -14,13 +14,13 @@ public enum DateParsing {
     }
 
     let iso =
-      isoFormatter(withFraction: true).date(from: trimmed)
-      ?? isoFormatter(withFraction: false).date(from: trimmed)
+      isoFormatterWithFraction.date(from: trimmed)
+      ?? isoFormatterNoFraction.date(from: trimmed)
     if let iso {
       return iso
     }
 
-    for formatter in dateFormatters() {
+    for formatter in cachedDateFormatters {
       if let date = formatter.date(from: trimmed) {
         return date
       }
@@ -29,13 +29,17 @@ public enum DateParsing {
     return nil
   }
 
-  public static func formatDisplay(_ date: Date, calendar: Calendar = .current) -> String {
+  private static let displayFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.locale = Locale.current
-    formatter.timeZone = calendar.timeZone
     formatter.dateStyle = .medium
     formatter.timeStyle = .short
-    return formatter.string(from: date)
+    return formatter
+  }()
+
+  public static func formatDisplay(_ date: Date, calendar: Calendar = .current) -> String {
+    displayFormatter.timeZone = calendar.timeZone
+    return displayFormatter.string(from: date)
   }
 
   private static func parseRelativeDate(_ input: String, now: Date, calendar: Calendar) -> Date? {
@@ -53,16 +57,19 @@ public enum DateParsing {
     }
   }
 
-  private static func isoFormatter(withFraction: Bool) -> ISO8601DateFormatter {
+  private nonisolated(unsafe) static let isoFormatterWithFraction: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
-    formatter.formatOptions =
-      withFraction
-      ? [.withInternetDateTime, .withFractionalSeconds]
-      : [.withInternetDateTime]
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter
-  }
+  }()
 
-  private static func dateFormatters() -> [DateFormatter] {
+  private nonisolated(unsafe) static let isoFormatterNoFraction: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+  }()
+
+  private static let cachedDateFormatters: [DateFormatter] = {
     let formats = [
       "yyyy-MM-dd",
       "yyyy-MM-dd HH:mm",
@@ -79,5 +86,5 @@ public enum DateParsing {
       formatter.dateFormat = format
       return formatter
     }
-  }
+  }()
 }
