@@ -17,6 +17,22 @@ enum CommandHelpers {
     }
   }
 
+  static func parseRecurrence(_ value: String) throws -> RecurrenceFrequency {
+    switch value.lowercased() {
+    case "daily", "day", "d":
+      return .daily
+    case "weekly", "week", "w":
+      return .weekly
+    case "monthly", "month", "m":
+      return .monthly
+    case "yearly", "year", "y":
+      return .yearly
+    default:
+      throw RemindCoreError.operationFailed(
+        "Invalid recurrence: \"\(value)\" (use daily|weekly|monthly|yearly)")
+    }
+  }
+
   static func parseDueDate(_ value: String) throws -> Date {
     guard let date = DateParsing.parseUserDate(value) else {
       throw RemindCoreError.invalidDate(value)

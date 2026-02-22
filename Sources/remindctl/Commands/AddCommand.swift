@@ -24,6 +24,12 @@ enum AddCommand {
               help: "none|low|medium|high",
               parsing: .singleValue
             ),
+            .make(
+              label: "recurrence",
+              names: [.short("r"), .long("recurrence")],
+              help: "daily|weekly|monthly|yearly",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -59,6 +65,8 @@ enum AddCommand {
 
       let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
+      let recurrenceValue = values.option("recurrence")
+      let recurrence = try recurrenceValue.map(CommandHelpers.parseRecurrence)
 
       let store = RemindersStore()
       try await store.requestAccess()
@@ -73,7 +81,8 @@ enum AddCommand {
         throw RemindCoreError.operationFailed("No default list found. Specify --list.")
       }
 
-      let draft = ReminderDraft(title: title, notes: notes, dueDate: dueDate, priority: priority)
+      let draft = ReminderDraft(
+        title: title, notes: notes, dueDate: dueDate, priority: priority, recurrence: recurrence)
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }

@@ -24,9 +24,17 @@ enum EditCommand {
               help: "none|low|medium|high",
               parsing: .singleValue
             ),
+            .make(
+              label: "recurrence",
+              names: [.short("r"), .long("recurrence")],
+              help: "daily|weekly|monthly|yearly",
+              parsing: .singleValue
+            ),
           ],
           flags: [
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
+            .make(
+              label: "clearRecurrence", names: [.long("clear-recurrence")], help: "Clear recurrence"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
           ]
@@ -71,6 +79,17 @@ enum EditCommand {
         priority = try CommandHelpers.parsePriority(priorityValue)
       }
 
+      var recurrenceUpdate: RecurrenceFrequency??
+      if let recurrenceValue = values.option("recurrence") {
+        recurrenceUpdate = try CommandHelpers.parseRecurrence(recurrenceValue)
+      }
+      if values.flag("clearRecurrence") {
+        if recurrenceUpdate != nil {
+          throw RemindCoreError.operationFailed("Use either --recurrence or --clear-recurrence, not both")
+        }
+        recurrenceUpdate = .some(nil)
+      }
+
       let completeFlag = values.flag("complete")
       let incompleteFlag = values.flag("incomplete")
       if completeFlag && incompleteFlag {
@@ -78,7 +97,9 @@ enum EditCommand {
       }
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
-      if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil && isCompleted == nil {
+      if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil
+        && recurrenceUpdate == nil && isCompleted == nil
+      {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 
@@ -87,6 +108,7 @@ enum EditCommand {
         notes: notes,
         dueDate: dueUpdate,
         priority: priority,
+        recurrence: recurrenceUpdate,
         listName: listName,
         isCompleted: isCompleted
       )
