@@ -17,8 +17,10 @@ public actor RemindersStore {
       if updated != .fullAccess {
         throw RemindCoreError.accessDenied
       }
-    case .denied, .restricted:
+    case .denied:
       throw RemindCoreError.accessDenied
+    case .restricted:
+      throw RemindCoreError.accessRestricted
     case .writeOnly:
       throw RemindCoreError.writeOnlyAccess
     case .fullAccess:
@@ -72,7 +74,11 @@ public actor RemindersStore {
       throw RemindCoreError.operationFailed("Unable to determine default reminder source")
     }
     list.source = source
-    try eventStore.saveCalendar(list, commit: true)
+    do {
+      try eventStore.saveCalendar(list, commit: true)
+    } catch {
+      throw RemindCoreError.eventKitError("create list", detail: error.localizedDescription)
+    }
     return ReminderList(id: list.calendarIdentifier, title: list.title)
   }
 
@@ -82,7 +88,11 @@ public actor RemindersStore {
       throw RemindCoreError.operationFailed("Cannot modify system list")
     }
     calendar.title = newName
-    try eventStore.saveCalendar(calendar, commit: true)
+    do {
+      try eventStore.saveCalendar(calendar, commit: true)
+    } catch {
+      throw RemindCoreError.eventKitError("rename list", detail: error.localizedDescription)
+    }
   }
 
   public func deleteList(name: String) async throws {
@@ -90,7 +100,11 @@ public actor RemindersStore {
     guard calendar.allowsContentModifications else {
       throw RemindCoreError.operationFailed("Cannot delete system list")
     }
-    try eventStore.removeCalendar(calendar, commit: true)
+    do {
+      try eventStore.removeCalendar(calendar, commit: true)
+    } catch {
+      throw RemindCoreError.eventKitError("delete list", detail: error.localizedDescription)
+    }
   }
 
   public func createReminder(_ draft: ReminderDraft, listName: String) async throws -> ReminderItem {
@@ -106,7 +120,11 @@ public actor RemindersStore {
     if let recurrence = draft.recurrence {
       applyRecurrence(recurrence, to: reminder)
     }
-    try eventStore.save(reminder, commit: true)
+    do {
+      try eventStore.save(reminder, commit: true)
+    } catch {
+      throw RemindCoreError.eventKitError("save reminder", detail: error.localizedDescription)
+    }
     return ReminderItem(
       id: reminder.calendarItemIdentifier,
       title: reminder.title ?? "",
@@ -154,7 +172,11 @@ public actor RemindersStore {
       reminder.isCompleted = isCompleted
     }
 
-    try eventStore.save(reminder, commit: true)
+    do {
+      try eventStore.save(reminder, commit: true)
+    } catch {
+      throw RemindCoreError.eventKitError("update reminder", detail: error.localizedDescription)
+    }
 
     return ReminderItem(
       id: reminder.calendarItemIdentifier,
@@ -175,7 +197,11 @@ public actor RemindersStore {
     for id in ids {
       let reminder = try reminder(withID: id)
       reminder.isCompleted = true
-      try eventStore.save(reminder, commit: true)
+      do {
+        try eventStore.save(reminder, commit: true)
+      } catch {
+        throw RemindCoreError.eventKitError("complete reminder", detail: error.localizedDescription)
+      }
       updated.append(
         ReminderItem(
           id: reminder.calendarItemIdentifier,
@@ -198,7 +224,11 @@ public actor RemindersStore {
     var deleted = 0
     for id in ids {
       let reminder = try reminder(withID: id)
-      try eventStore.remove(reminder, commit: true)
+      do {
+        try eventStore.remove(reminder, commit: true)
+      } catch {
+        throw RemindCoreError.eventKitError("delete reminder", detail: error.localizedDescription)
+      }
       deleted += 1
     }
     return deleted

@@ -31,7 +31,9 @@ enum AuthorizeCommand {
         return
       case .writeOnly:
         throw RemindCoreError.writeOnlyAccess
-      case .notDetermined, .denied, .restricted:
+      case .restricted:
+        throw RemindCoreError.accessRestricted
+      case .notDetermined, .denied:
         throw RemindCoreError.accessDenied
       }
     }
