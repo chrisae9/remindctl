@@ -63,10 +63,10 @@ enum CompletionsCommand {
                 fi
                 ;;
             add)
-                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --start-date --timezone --json --plain --quiet" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --recurrence-days --recurrence-month-days --recurrence-months --recurrence-end --start-date --timezone --json --plain --quiet" -- "${cur}") )
                 ;;
             edit)
-                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --start-date --timezone --clear-due --clear-recurrence --clear-start-date --clear-timezone --complete --incomplete --json --plain --quiet" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--title --list --due --notes --priority --recurrence --recurrence-days --recurrence-month-days --recurrence-months --recurrence-end --start-date --timezone --clear-due --clear-recurrence --clear-start-date --clear-timezone --complete --incomplete --json --plain --quiet" -- "${cur}") )
                 ;;
             list)
                 COMPREPLY=( $(compgen -W "--rename --delete --create --force --json --plain --quiet" -- "${cur}") )
@@ -151,6 +151,10 @@ enum CompletionsCommand {
                             '(-n --notes)'{-n,--notes}'[Notes]:notes:' \\
                             '(-p --priority)'{-p,--priority}'[Priority]:priority:(none low medium high)' \\
                             '(-r --recurrence)'{-r,--recurrence}'[Recurrence]:frequency:(daily weekly monthly yearly)' \\
+                            '--recurrence-days[Days of week]:days:' \\
+                            '--recurrence-month-days[Days of month]:days:' \\
+                            '--recurrence-months[Months]:months:' \\
+                            '--recurrence-end[End condition]:end:' \\
                             '--start-date[Start date]:date:' \\
                             '--timezone[IANA timezone]:timezone:' \\
                             '(-j --json)'{-j,--json}'[JSON output]' \\
@@ -166,6 +170,10 @@ enum CompletionsCommand {
                             '(-n --notes)'{-n,--notes}'[Set notes]:notes:' \\
                             '(-p --priority)'{-p,--priority}'[Priority]:priority:(none low medium high)' \\
                             '(-r --recurrence)'{-r,--recurrence}'[Recurrence]:frequency:(daily weekly monthly yearly)' \\
+                            '--recurrence-days[Days of week]:days:' \\
+                            '--recurrence-month-days[Days of month]:days:' \\
+                            '--recurrence-months[Months]:months:' \\
+                            '--recurrence-end[End condition]:end:' \\
                             '--start-date[Set start date]:date:' \\
                             '--timezone[IANA timezone]:timezone:' \\
                             '--clear-due[Clear due date]' \\
@@ -257,6 +265,10 @@ enum CompletionsCommand {
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l notes -s n -r -d "Notes"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l priority -s p -r -a "none low medium high" -d "Priority"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l recurrence -s r -r -a "daily weekly monthly yearly" -d "Recurrence"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l recurrence-days -r -d "Days of week"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l recurrence-month-days -r -d "Days of month"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l recurrence-months -r -d "Months"
+    complete -c remindctl -n "__fish_seen_subcommand_from add" -l recurrence-end -r -d "End condition"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l start-date -r -d "Start date"
     complete -c remindctl -n "__fish_seen_subcommand_from add" -l timezone -r -d "IANA timezone"
 
@@ -267,6 +279,10 @@ enum CompletionsCommand {
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l notes -s n -r -d "Notes"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l priority -s p -r -a "none low medium high" -d "Priority"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l recurrence -s r -r -a "daily weekly monthly yearly" -d "Recurrence"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l recurrence-days -r -d "Days of week"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l recurrence-month-days -r -d "Days of month"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l recurrence-months -r -d "Months"
+    complete -c remindctl -n "__fish_seen_subcommand_from edit" -l recurrence-end -r -d "End condition"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l start-date -r -d "Start date"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l timezone -r -d "IANA timezone"
     complete -c remindctl -n "__fish_seen_subcommand_from edit" -l clear-due -d "Clear due date"

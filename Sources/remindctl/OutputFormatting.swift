@@ -53,7 +53,7 @@ enum OutputRenderer {
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
       let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
       let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
-      let recurrence = reminder.recurrence.map { " repeats=\($0.rawValue)" } ?? ""
+      let recurrence = reminder.recurrence.map { " repeats=\(formatRecurrence($0))" } ?? ""
       Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)\(start)\(tz)\(recurrence)")
     case .plain:
       Swift.print(plainLine(for: reminder))
@@ -103,7 +103,7 @@ enum OutputRenderer {
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
       let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
-      let recurrence = reminder.recurrence.map { " repeats=\($0.rawValue)" } ?? ""
+      let recurrence = reminder.recurrence.map { " repeats=\(formatRecurrence($0))" } ?? ""
       Swift.print(
         "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(start)\(tz)\(recurrence)"
       )
@@ -158,6 +158,27 @@ enum OutputRenderer {
     } catch {
       Swift.print("Failed to encode JSON: \(error)")
     }
+  }
+
+  private static func formatRecurrence(_ rule: RecurrenceRule) -> String {
+    var desc = rule.interval > 1 ? "\(rule.interval)-\(rule.frequency.rawValue)" : rule.frequency.rawValue
+    if let days = rule.daysOfTheWeek {
+      let names = ["", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+      desc += " on=" + days.map { $0 >= 1 && $0 <= 7 ? names[$0] : "\($0)" }.joined(separator: ",")
+    }
+    if let days = rule.daysOfTheMonth {
+      desc += " days=" + days.map(String.init).joined(separator: ",")
+    }
+    if let months = rule.monthsOfTheYear {
+      desc += " months=" + months.map(String.init).joined(separator: ",")
+    }
+    if let endDate = rule.endDate {
+      desc += " until=\(DateParsing.formatDisplay(endDate))"
+    }
+    if let count = rule.endOccurrenceCount {
+      desc += " \(count)x"
+    }
+    return desc
   }
 
   private static func isoFormatter() -> ISO8601DateFormatter {

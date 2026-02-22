@@ -137,15 +137,16 @@ struct ReminderStoreTests {
   @Test("Create reminder")
   func createReminder() async throws {
     let store = sampleStore()
+    let weeklyRule = RecurrenceRule(frequency: .weekly)
     let draft = ReminderDraft(
       title: "New task", notes: "some notes",
-      dueDate: Date(), priority: .medium, recurrence: .weekly
+      dueDate: Date(), priority: .medium, recurrence: weeklyRule
     )
     let item = try await store.createReminder(draft, listName: "Home")
     #expect(item.title == "New task")
     #expect(item.notes == "some notes")
     #expect(item.priority == .medium)
-    #expect(item.recurrence == .weekly)
+    #expect(item.recurrence == weeklyRule)
     #expect(item.listName == "Home")
     #expect(!item.isCompleted)
 
@@ -186,9 +187,10 @@ struct ReminderStoreTests {
   @Test("Update reminder recurrence")
   func updateRecurrence() async throws {
     let store = sampleStore()
-    let update = ReminderUpdate(recurrence: .some(.daily))
+    let dailyRule = RecurrenceRule(frequency: .daily)
+    let update = ReminderUpdate(recurrence: .some(dailyRule))
     let updated = try await store.updateReminder(id: "r1", update: update)
-    #expect(updated.recurrence == .daily)
+    #expect(updated.recurrence == dailyRule)
   }
 
   @Test("Update reminder move to different list")
@@ -322,5 +324,53 @@ struct ReminderStoreTests {
     let clearUpdate = ReminderUpdate(timeZone: .some(nil))
     let updated = try await store.updateReminder(id: "r1", update: clearUpdate)
     #expect(updated.timeZone == nil)
+  }
+
+  // MARK: - Enhanced Recurrence
+
+  @Test("Create reminder with recurrence rule interval")
+  func createWithRecurrenceInterval() async throws {
+    let store = sampleStore()
+    let rule = RecurrenceRule(frequency: .weekly, interval: 2)
+    let draft = ReminderDraft(
+      title: "Biweekly", notes: nil, dueDate: Date(), priority: .none, recurrence: rule
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.recurrence?.frequency == .weekly)
+    #expect(item.recurrence?.interval == 2)
+  }
+
+  @Test("Create reminder with days of week")
+  func createWithDaysOfWeek() async throws {
+    let store = sampleStore()
+    let rule = RecurrenceRule(frequency: .weekly, daysOfTheWeek: [2, 4, 6])
+    let draft = ReminderDraft(
+      title: "MWF", notes: nil, dueDate: Date(), priority: .none, recurrence: rule
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.recurrence?.daysOfTheWeek == [2, 4, 6])
+  }
+
+  @Test("Create reminder with end occurrence count")
+  func createWithEndCount() async throws {
+    let store = sampleStore()
+    let rule = RecurrenceRule(frequency: .daily, endOccurrenceCount: 10)
+    let draft = ReminderDraft(
+      title: "Limited", notes: nil, dueDate: Date(), priority: .none, recurrence: rule
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.recurrence?.endOccurrenceCount == 10)
+  }
+
+  @Test("Clear recurrence rule")
+  func clearRecurrenceRule() async throws {
+    let store = sampleStore()
+    // Set a recurrence
+    let setUpdate = ReminderUpdate(recurrence: .some(RecurrenceRule(frequency: .daily)))
+    _ = try await store.updateReminder(id: "r1", update: setUpdate)
+    // Clear it
+    let clearUpdate = ReminderUpdate(recurrence: .some(nil))
+    let updated = try await store.updateReminder(id: "r1", update: clearUpdate)
+    #expect(updated.recurrence == nil)
   }
 }

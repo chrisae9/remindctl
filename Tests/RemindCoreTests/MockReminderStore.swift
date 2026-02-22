@@ -103,7 +103,7 @@ actor MockReminderStore: ReminderStoreProtocol {
       newDueDate = existing.dueDate
     }
 
-    let newRecurrence: RecurrenceFrequency?
+    let newRecurrence: RecurrenceRule?
     if let recurrenceUpdate = update.recurrence {
       newRecurrence = recurrenceUpdate
     } else {

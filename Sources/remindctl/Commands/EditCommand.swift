@@ -27,7 +27,31 @@ enum EditCommand {
             .make(
               label: "recurrence",
               names: [.short("r"), .long("recurrence")],
-              help: "daily|weekly|monthly|yearly",
+              help: "daily|2-weekly|\"every 3 months\"",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceDays",
+              names: [.long("recurrence-days")],
+              help: "Days of week: mon,wed,fri",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceMonthDays",
+              names: [.long("recurrence-month-days")],
+              help: "Days of month: 1,15,-1",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceMonths",
+              names: [.long("recurrence-months")],
+              help: "Months: jan,jul or 1,7",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceEnd",
+              names: [.long("recurrence-end")],
+              help: "End: date or 10x for count",
               parsing: .singleValue
             ),
             .make(
@@ -93,9 +117,26 @@ enum EditCommand {
         priority = try CommandHelpers.parsePriority(priorityValue)
       }
 
-      var recurrenceUpdate: RecurrenceFrequency??
+      var recurrenceUpdate: RecurrenceRule??
       if let recurrenceValue = values.option("recurrence") {
         recurrenceUpdate = try CommandHelpers.parseRecurrence(recurrenceValue)
+      }
+      let recDays = try values.option("recurrenceDays").map(CommandHelpers.parseDaysOfWeek)
+      let recMonthDays = try values.option("recurrenceMonthDays").map(CommandHelpers.parseDaysOfMonth)
+      let recMonths = try values.option("recurrenceMonths").map(CommandHelpers.parseMonthsOfYear)
+      let recEnd = try values.option("recurrenceEnd").map(CommandHelpers.parseRecurrenceEnd)
+      if recDays != nil || recMonthDays != nil || recMonths != nil || recEnd != nil {
+        let base: RecurrenceRule
+        if let update = recurrenceUpdate, let rule = update {
+          base = rule
+        } else {
+          base = RecurrenceRule(frequency: .weekly)
+        }
+        recurrenceUpdate = CommandHelpers.buildRecurrenceRule(
+          base: base,
+          daysOfWeek: recDays, daysOfMonth: recMonthDays, monthsOfYear: recMonths,
+          endDate: recEnd?.date, endCount: recEnd?.count
+        )
       }
       if values.flag("clearRecurrence") {
         if recurrenceUpdate != nil {

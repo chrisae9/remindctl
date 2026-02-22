@@ -26,6 +26,7 @@ struct PriorityTests {
 
   @Test("ReminderItem includes recurrence in JSON")
   func recurrenceInItem() {
+    let weeklyRule = RecurrenceRule(frequency: .weekly)
     let item = ReminderItem(
       id: "1",
       title: "Test",
@@ -34,11 +35,11 @@ struct PriorityTests {
       completionDate: nil,
       priority: .none,
       dueDate: nil,
-      recurrence: .weekly,
+      recurrence: weeklyRule,
       listID: "a",
       listName: "Home"
     )
-    #expect(item.recurrence == .weekly)
+    #expect(item.recurrence == weeklyRule)
 
     let noRecurrence = ReminderItem(
       id: "2",

@@ -143,7 +143,7 @@ public actor RemindersStore {
       dueDate: date(from: reminder.dueDateComponents),
       startDate: date(from: reminder.startDateComponents),
       timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-      recurrence: recurrenceFrequency(from: reminder),
+      recurrence: recurrenceRule(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -210,7 +210,7 @@ public actor RemindersStore {
       dueDate: date(from: reminder.dueDateComponents),
       startDate: date(from: reminder.startDateComponents),
       timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-      recurrence: recurrenceFrequency(from: reminder),
+      recurrence: recurrenceRule(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -237,7 +237,7 @@ public actor RemindersStore {
           dueDate: date(from: reminder.dueDateComponents),
           startDate: date(from: reminder.startDateComponents),
           timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-          recurrence: recurrenceFrequency(from: reminder),
+          recurrence: recurrenceRule(from: reminder),
           listID: reminder.calendar.calendarIdentifier,
           listName: reminder.calendar.title
         )
@@ -283,7 +283,7 @@ public actor RemindersStore {
       let dueDateComponents: DateComponents?
       let startDateComponents: DateComponents?
       let timeZone: String?
-      let recurrence: RecurrenceFrequency?
+      let recurrence: RecurrenceRule?
       let listID: String
       let listName: String
     }
@@ -292,15 +292,43 @@ public actor RemindersStore {
       let predicate = eventStore.predicateForReminders(in: calendars)
       eventStore.fetchReminders(matching: predicate) { reminders in
         let data = (reminders ?? []).map { reminder in
-          let recurrence: RecurrenceFrequency? = {
-            guard let rule = reminder.recurrenceRules?.first else { return nil }
-            switch rule.frequency {
-            case .daily: return .daily
-            case .weekly: return .weekly
-            case .monthly: return .monthly
-            case .yearly: return .yearly
+          let recurrence: RecurrenceRule? = {
+            guard let ekRule = reminder.recurrenceRules?.first else { return nil }
+            let frequency: RecurrenceFrequency
+            switch ekRule.frequency {
+            case .daily: frequency = .daily
+            case .weekly: frequency = .weekly
+            case .monthly: frequency = .monthly
+            case .yearly: frequency = .yearly
             @unknown default: return nil
             }
+            let daysOfTheWeek = ekRule.daysOfTheWeek?.map { $0.dayOfTheWeek.rawValue }
+            let daysOfTheMonth = ekRule.daysOfTheMonth?.map { $0.intValue }
+            let monthsOfTheYear = ekRule.monthsOfTheYear?.map { $0.intValue }
+            let weeksOfTheYear = ekRule.weeksOfTheYear?.map { $0.intValue }
+            let daysOfTheYear = ekRule.daysOfTheYear?.map { $0.intValue }
+            let setPositions = ekRule.setPositions?.map { $0.intValue }
+            var endDate: Date?
+            var endCount: Int?
+            if let end = ekRule.recurrenceEnd {
+              if let date = end.endDate {
+                endDate = date
+              } else if end.occurrenceCount > 0 {
+                endCount = end.occurrenceCount
+              }
+            }
+            return RecurrenceRule(
+              frequency: frequency,
+              interval: ekRule.interval,
+              daysOfTheWeek: daysOfTheWeek,
+              daysOfTheMonth: daysOfTheMonth,
+              monthsOfTheYear: monthsOfTheYear,
+              weeksOfTheYear: weeksOfTheYear,
+              daysOfTheYear: daysOfTheYear,
+              setPositions: setPositions,
+              endDate: endDate,
+              endOccurrenceCount: endCount
+            )
           }()
           let tz = reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier
           return ReminderData(
@@ -355,32 +383,86 @@ public actor RemindersStore {
     return calendar
   }
 
-  private func recurrenceFrequency(from reminder: EKReminder) -> RecurrenceFrequency? {
+  private func recurrenceRule(from reminder: EKReminder) -> RecurrenceRule? {
     guard let rule = reminder.recurrenceRules?.first else { return nil }
+    let frequency: RecurrenceFrequency
     switch rule.frequency {
-    case .daily: return .daily
-    case .weekly: return .weekly
-    case .monthly: return .monthly
-    case .yearly: return .yearly
+    case .daily: frequency = .daily
+    case .weekly: frequency = .weekly
+    case .monthly: frequency = .monthly
+    case .yearly: frequency = .yearly
     @unknown default: return nil
     }
+
+    let daysOfTheWeek = rule.daysOfTheWeek?.map { $0.dayOfTheWeek.rawValue }
+    let daysOfTheMonth = rule.daysOfTheMonth?.map { $0.intValue }
+    let monthsOfTheYear = rule.monthsOfTheYear?.map { $0.intValue }
+    let weeksOfTheYear = rule.weeksOfTheYear?.map { $0.intValue }
+    let daysOfTheYear = rule.daysOfTheYear?.map { $0.intValue }
+    let setPositions = rule.setPositions?.map { $0.intValue }
+
+    var endDate: Date?
+    var endCount: Int?
+    if let end = rule.recurrenceEnd {
+      if let date = end.endDate {
+        endDate = date
+      } else if end.occurrenceCount > 0 {
+        endCount = end.occurrenceCount
+      }
+    }
+
+    return RecurrenceRule(
+      frequency: frequency,
+      interval: rule.interval,
+      daysOfTheWeek: daysOfTheWeek,
+      daysOfTheMonth: daysOfTheMonth,
+      monthsOfTheYear: monthsOfTheYear,
+      weeksOfTheYear: weeksOfTheYear,
+      daysOfTheYear: daysOfTheYear,
+      setPositions: setPositions,
+      endDate: endDate,
+      endOccurrenceCount: endCount
+    )
   }
 
-  private func applyRecurrence(_ frequency: RecurrenceFrequency, to reminder: EKReminder) {
+  private func applyRecurrence(_ rule: RecurrenceRule, to reminder: EKReminder) {
     reminder.recurrenceRules?.forEach { reminder.removeRecurrenceRule($0) }
     let ekFrequency: EKRecurrenceFrequency
-    switch frequency {
+    switch rule.frequency {
     case .daily: ekFrequency = .daily
     case .weekly: ekFrequency = .weekly
     case .monthly: ekFrequency = .monthly
     case .yearly: ekFrequency = .yearly
     }
-    let rule = EKRecurrenceRule(
+
+    let daysOfTheWeek = rule.daysOfTheWeek?.map {
+      EKRecurrenceDayOfWeek(EKWeekday(rawValue: $0)!)
+    }
+    let daysOfTheMonth = rule.daysOfTheMonth?.map { NSNumber(value: $0) }
+    let monthsOfTheYear = rule.monthsOfTheYear?.map { NSNumber(value: $0) }
+    let weeksOfTheYear = rule.weeksOfTheYear?.map { NSNumber(value: $0) }
+    let daysOfTheYear = rule.daysOfTheYear?.map { NSNumber(value: $0) }
+    let setPositions = rule.setPositions?.map { NSNumber(value: $0) }
+
+    var end: EKRecurrenceEnd?
+    if let endDate = rule.endDate {
+      end = EKRecurrenceEnd(end: endDate)
+    } else if let count = rule.endOccurrenceCount {
+      end = EKRecurrenceEnd(occurrenceCount: count)
+    }
+
+    let ekRule = EKRecurrenceRule(
       recurrenceWith: ekFrequency,
-      interval: 1,
-      end: nil
+      interval: rule.interval,
+      daysOfTheWeek: daysOfTheWeek,
+      daysOfTheMonth: daysOfTheMonth,
+      monthsOfTheYear: monthsOfTheYear,
+      weeksOfTheYear: weeksOfTheYear,
+      daysOfTheYear: daysOfTheYear,
+      setPositions: setPositions,
+      end: end
     )
-    reminder.addRecurrenceRule(rule)
+    reminder.addRecurrenceRule(ekRule)
   }
 
   private func clearRecurrence(from reminder: EKReminder) {
@@ -407,7 +489,7 @@ public actor RemindersStore {
       dueDate: date(from: reminder.dueDateComponents),
       startDate: date(from: reminder.startDateComponents),
       timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-      recurrence: recurrenceFrequency(from: reminder),
+      recurrence: recurrenceRule(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )

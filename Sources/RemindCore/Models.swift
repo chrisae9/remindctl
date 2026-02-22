@@ -7,6 +7,43 @@ public enum RecurrenceFrequency: String, Codable, CaseIterable, Sendable {
   case yearly
 }
 
+public struct RecurrenceRule: Codable, Sendable, Equatable {
+  public let frequency: RecurrenceFrequency
+  public let interval: Int
+  public let daysOfTheWeek: [Int]?
+  public let daysOfTheMonth: [Int]?
+  public let monthsOfTheYear: [Int]?
+  public let weeksOfTheYear: [Int]?
+  public let daysOfTheYear: [Int]?
+  public let setPositions: [Int]?
+  public let endDate: Date?
+  public let endOccurrenceCount: Int?
+
+  public init(
+    frequency: RecurrenceFrequency,
+    interval: Int = 1,
+    daysOfTheWeek: [Int]? = nil,
+    daysOfTheMonth: [Int]? = nil,
+    monthsOfTheYear: [Int]? = nil,
+    weeksOfTheYear: [Int]? = nil,
+    daysOfTheYear: [Int]? = nil,
+    setPositions: [Int]? = nil,
+    endDate: Date? = nil,
+    endOccurrenceCount: Int? = nil
+  ) {
+    self.frequency = frequency
+    self.interval = interval
+    self.daysOfTheWeek = daysOfTheWeek
+    self.daysOfTheMonth = daysOfTheMonth
+    self.monthsOfTheYear = monthsOfTheYear
+    self.weeksOfTheYear = weeksOfTheYear
+    self.daysOfTheYear = daysOfTheYear
+    self.setPositions = setPositions
+    self.endDate = endDate
+    self.endOccurrenceCount = endOccurrenceCount
+  }
+}
+
 public enum ReminderPriority: String, Codable, CaseIterable, Sendable {
   case none
   case low
@@ -60,7 +97,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let dueDate: Date?
   public let startDate: Date?
   public let timeZone: String?
-  public let recurrence: RecurrenceFrequency?
+  public let recurrence: RecurrenceRule?
   public let listID: String
   public let listName: String
 
@@ -74,7 +111,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     dueDate: Date?,
     startDate: Date? = nil,
     timeZone: String? = nil,
-    recurrence: RecurrenceFrequency? = nil,
+    recurrence: RecurrenceRule? = nil,
     listID: String,
     listName: String
   ) {
@@ -100,7 +137,7 @@ public struct ReminderDraft: Sendable {
   public let startDate: Date?
   public let timeZone: String?
   public let priority: ReminderPriority
-  public let recurrence: RecurrenceFrequency?
+  public let recurrence: RecurrenceRule?
 
   public init(
     title: String,
@@ -109,7 +146,7 @@ public struct ReminderDraft: Sendable {
     startDate: Date? = nil,
     timeZone: String? = nil,
     priority: ReminderPriority,
-    recurrence: RecurrenceFrequency? = nil
+    recurrence: RecurrenceRule? = nil
   ) {
     self.title = title
     self.notes = notes
@@ -128,7 +165,7 @@ public struct ReminderUpdate: Sendable {
   public let startDate: Date??
   public let timeZone: String??
   public let priority: ReminderPriority?
-  public let recurrence: RecurrenceFrequency??
+  public let recurrence: RecurrenceRule??
   public let listName: String?
   public let isCompleted: Bool?
 
@@ -139,7 +176,7 @@ public struct ReminderUpdate: Sendable {
     startDate: Date?? = nil,
     timeZone: String?? = nil,
     priority: ReminderPriority? = nil,
-    recurrence: RecurrenceFrequency?? = nil,
+    recurrence: RecurrenceRule?? = nil,
     listName: String? = nil,
     isCompleted: Bool? = nil
   ) {

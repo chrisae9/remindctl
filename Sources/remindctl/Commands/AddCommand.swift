@@ -27,7 +27,31 @@ enum AddCommand {
             .make(
               label: "recurrence",
               names: [.short("r"), .long("recurrence")],
-              help: "daily|weekly|monthly|yearly",
+              help: "daily|2-weekly|\"every 3 months\"",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceDays",
+              names: [.long("recurrence-days")],
+              help: "Days of week: mon,wed,fri",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceMonthDays",
+              names: [.long("recurrence-month-days")],
+              help: "Days of month: 1,15,-1",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceMonths",
+              names: [.long("recurrence-months")],
+              help: "Months: jan,jul or 1,7",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "recurrenceEnd",
+              names: [.long("recurrence-end")],
+              help: "End: date or 10x for count",
               parsing: .singleValue
             ),
             .make(
@@ -77,8 +101,19 @@ enum AddCommand {
 
       let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
-      let recurrenceValue = values.option("recurrence")
-      let recurrence = try recurrenceValue.map(CommandHelpers.parseRecurrence)
+      var recurrence = try values.option("recurrence").map(CommandHelpers.parseRecurrence)
+      let recDays = try values.option("recurrenceDays").map(CommandHelpers.parseDaysOfWeek)
+      let recMonthDays = try values.option("recurrenceMonthDays").map(CommandHelpers.parseDaysOfMonth)
+      let recMonths = try values.option("recurrenceMonths").map(CommandHelpers.parseMonthsOfYear)
+      let recEnd = try values.option("recurrenceEnd").map(CommandHelpers.parseRecurrenceEnd)
+      if recDays != nil || recMonthDays != nil || recMonths != nil || recEnd != nil {
+        let base = recurrence ?? RecurrenceRule(frequency: .weekly)
+        recurrence = CommandHelpers.buildRecurrenceRule(
+          base: base,
+          daysOfWeek: recDays, daysOfMonth: recMonthDays, monthsOfYear: recMonths,
+          endDate: recEnd?.date, endCount: recEnd?.count
+        )
+      }
       let startDate = try values.option("startDate").map(CommandHelpers.parseDueDate)
       let timeZone = try values.option("timezone").map(CommandHelpers.parseTimeZone)
 
