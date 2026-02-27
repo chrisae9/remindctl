@@ -47,6 +47,7 @@ remindctl 2026-01-03            # specific date
 # Lists
 remindctl list                  # show all lists with counts
 remindctl list Work             # show reminders in a list
+remindctl list Work Personal    # show reminders from multiple lists
 remindctl list Work --rename Office
 remindctl list Work --delete --force
 remindctl list Projects --create
@@ -54,7 +55,8 @@ remindctl list Projects --create
 # Add reminders
 remindctl add "Buy milk"
 remindctl add --title "Call mom" --list Personal --due tomorrow
-remindctl add "Review docs" --priority high --due 2026-03-01
+remindctl add "Review docs" --priority high --due 2026-03-01        # timed reminder
+remindctl add "Team offsite" --due 2026-03-15                        # all-day (date only)
 remindctl add "Standup" --due tomorrow --recurrence daily --alarm -15m
 remindctl add "Biweekly" --recurrence 2-weekly --recurrence-days mon,fri
 remindctl add "Task" --due tomorrow --start-date today --timezone America/New_York
@@ -86,6 +88,7 @@ Use `--json` for structured output and `--no-input` to disable interactive promp
 
 ```bash
 remindctl show --json                     # JSON array of reminders
+remindctl show --list Work --list Personal --json  # multiple lists
 remindctl add "Task" --json --no-input    # create and return JSON
 remindctl status --json                   # {"status":"fullAccess","authorized":true}
 remindctl delete 1 --force --json         # {"deleted":1}
@@ -104,10 +107,39 @@ remindctl delete 1 --force --json         # {"deleted":1}
 ## Date formats
 
 Accepted by `--due`, `--start-date`, and filter arguments:
-- `today`, `tomorrow`, `yesterday`, `now`
-- `YYYY-MM-DD`
-- `YYYY-MM-DD HH:mm`
-- ISO 8601 (`2026-01-03T12:34:56Z`)
+
+| Format | Example | Type |
+|--------|---------|------|
+| `today`, `tomorrow`, `yesterday` | — | All-day |
+| `YYYY-MM-DD` | `2026-03-15` | All-day |
+| `YYYY-MM-DD HH:mm` | `2026-03-15 09:00` | Timed |
+| ISO 8601 | `2026-01-03T12:34:56Z` | Timed |
+
+Date-only formats (no time component) create **all-day reminders** — shown without
+a time in the Reminders app. Formats that include a time create timed reminders.
+JSON output includes `dueDateIsAllDay: true/false` to distinguish them.
+
+## JSON fields
+
+Each reminder in JSON output includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Calendar item identifier |
+| `title` | string | Reminder title |
+| `notes` | string? | Notes body |
+| `isCompleted` | bool | Completion state |
+| `completionDate` | ISO 8601? | When completed |
+| `creationDate` | ISO 8601? | When the reminder was originally created |
+| `priority` | string | `none`, `low`, `medium`, `high` |
+| `dueDate` | ISO 8601? | Due date/time |
+| `dueDateIsAllDay` | bool | True when due date has no time component |
+| `startDate` | ISO 8601? | Start date |
+| `timeZone` | string? | IANA timezone identifier |
+| `recurrence` | object? | Recurrence rule |
+| `alarms` | array | Time or location-based alarms |
+| `listID` | string | Calendar identifier of the containing list |
+| `listName` | string | Display name of the containing list |
 
 ## Recurrence
 
