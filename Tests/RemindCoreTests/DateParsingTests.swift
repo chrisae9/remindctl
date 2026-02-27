@@ -43,4 +43,46 @@ struct DateParsingTests {
     let output = DateParsing.formatDisplay(date, calendar: calendar)
     #expect(output.isEmpty == false)
   }
+
+  // MARK: - ParsedDate / isDateOnly
+
+  @Test("Date-only formats are marked isDateOnly=true")
+  func dateOnlyFormats() {
+    let dateOnly = ["2026-01-16", "01/16/2026", "16-01-2026", "16-01-26", "today", "tomorrow"]
+    for input in dateOnly {
+      let parsed = DateParsing.parseUserDateExtended(input)
+      #expect(parsed != nil, "Expected '\(input)' to parse")
+      #expect(parsed?.isDateOnly == true, "Expected '\(input)' to be date-only")
+    }
+  }
+
+  @Test("Timed formats are marked isDateOnly=false")
+  func timedFormats() {
+    let timed = [
+      "2026-01-16 09:00",
+      "2026-01-16 09:00:00",
+      "01/16/2026 09:00",
+      "2026-01-03T12:34:56Z",
+    ]
+    for input in timed {
+      let parsed = DateParsing.parseUserDateExtended(input)
+      #expect(parsed != nil, "Expected '\(input)' to parse")
+      #expect(parsed?.isDateOnly == false, "Expected '\(input)' to NOT be date-only")
+    }
+  }
+
+  @Test("parseUserDate still works for backward compat")
+  func backwardCompat() {
+    let result = DateParsing.parseUserDate("2026-01-16")
+    #expect(result != nil)
+  }
+
+  @Test("formatDateOnly omits time component")
+  func formatDateOnlyOutput() {
+    let date = Date(timeIntervalSince1970: 1_700_000_000)
+    let output = DateParsing.formatDateOnly(date, calendar: calendar)
+    #expect(output.isEmpty == false)
+    // Should not contain a colon (time separator)
+    #expect(!output.contains(":"))
+  }
 }

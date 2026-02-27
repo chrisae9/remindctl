@@ -162,11 +162,11 @@ enum CommandHelpers {
     )
   }
 
-  static func parseDueDate(_ value: String) throws -> Date {
-    guard let date = DateParsing.parseUserDate(value) else {
+  static func parseDueDate(_ value: String) throws -> ParsedDate {
+    guard let parsed = DateParsing.parseUserDateExtended(value) else {
       throw RemindCoreError.invalidDate(value)
     }
-    return date
+    return parsed
   }
 
   static func parseTimeZone(_ value: String) throws -> String {

@@ -130,8 +130,11 @@ enum EditCommand {
       let notes = values.option("notes")
 
       var dueUpdate: Date??
+      var dueIsAllDay: Bool?
       if let dueValue = values.option("due") {
-        dueUpdate = try CommandHelpers.parseDueDate(dueValue)
+        let parsed = try CommandHelpers.parseDueDate(dueValue)
+        dueUpdate = parsed.date
+        dueIsAllDay = parsed.isDateOnly
       }
       if values.flag("clearDue") {
         if dueUpdate != nil {
@@ -174,8 +177,11 @@ enum EditCommand {
       }
 
       var startDateUpdate: Date??
+      var startIsAllDay: Bool?
       if let startDateValue = values.option("startDate") {
-        startDateUpdate = try CommandHelpers.parseDueDate(startDateValue)
+        let parsed = try CommandHelpers.parseDueDate(startDateValue)
+        startDateUpdate = parsed.date
+        startIsAllDay = parsed.isDateOnly
       }
       if values.flag("clearStartDate") {
         if startDateUpdate != nil {
@@ -233,7 +239,9 @@ enum EditCommand {
         title: title,
         notes: notes,
         dueDate: dueUpdate,
+        dueDateIsAllDay: dueIsAllDay,
         startDate: startDateUpdate,
+        startDateIsAllDay: startIsAllDay,
         timeZone: timeZoneUpdate,
         priority: priority,
         recurrence: recurrenceUpdate,

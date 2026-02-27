@@ -84,7 +84,8 @@ actor MockReminderStore: ReminderStoreProtocol {
       recurrence: draft.recurrence,
       alarms: draft.alarms,
       listID: listID,
-      listName: listName
+      listName: listName,
+      dueDateIsAllDay: draft.dueDateIsAllDay
     )
     nextID += 1
     storedReminders.append(item)
@@ -102,6 +103,13 @@ actor MockReminderStore: ReminderStoreProtocol {
       newDueDate = dueDateUpdate
     } else {
       newDueDate = existing.dueDate
+    }
+
+    let newDueDateIsAllDay: Bool
+    if let isAllDay = update.dueDateIsAllDay {
+      newDueDateIsAllDay = isAllDay
+    } else {
+      newDueDateIsAllDay = existing.dueDateIsAllDay
     }
 
     let newRecurrence: RecurrenceRule?
@@ -156,7 +164,8 @@ actor MockReminderStore: ReminderStoreProtocol {
       recurrence: newRecurrence,
       alarms: newAlarms,
       listID: newListID,
-      listName: newListName
+      listName: newListName,
+      dueDateIsAllDay: newDueDateIsAllDay
     )
     storedReminders[index] = updated
     return updated

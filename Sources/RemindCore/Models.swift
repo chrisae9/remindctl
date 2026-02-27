@@ -143,8 +143,11 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let notes: String?
   public let isCompleted: Bool
   public let completionDate: Date?
+  public let creationDate: Date?
   public let priority: ReminderPriority
   public let dueDate: Date?
+  /// True when the due date has no time component (all-day reminder).
+  public let dueDateIsAllDay: Bool
   public let startDate: Date?
   public let timeZone: String?
   public let recurrence: RecurrenceRule?
@@ -165,15 +168,19 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     recurrence: RecurrenceRule? = nil,
     alarms: [ReminderAlarm] = [],
     listID: String,
-    listName: String
+    listName: String,
+    creationDate: Date? = nil,
+    dueDateIsAllDay: Bool = false
   ) {
     self.id = id
     self.title = title
     self.notes = notes
     self.isCompleted = isCompleted
     self.completionDate = completionDate
+    self.creationDate = creationDate
     self.priority = priority
     self.dueDate = dueDate
+    self.dueDateIsAllDay = dueDateIsAllDay
     self.startDate = startDate
     self.timeZone = timeZone
     self.recurrence = recurrence
@@ -187,7 +194,9 @@ public struct ReminderDraft: Sendable {
   public let title: String
   public let notes: String?
   public let dueDate: Date?
+  public let dueDateIsAllDay: Bool
   public let startDate: Date?
+  public let startDateIsAllDay: Bool
   public let timeZone: String?
   public let priority: ReminderPriority
   public let recurrence: RecurrenceRule?
@@ -201,12 +210,16 @@ public struct ReminderDraft: Sendable {
     timeZone: String? = nil,
     priority: ReminderPriority,
     recurrence: RecurrenceRule? = nil,
-    alarms: [ReminderAlarm] = []
+    alarms: [ReminderAlarm] = [],
+    dueDateIsAllDay: Bool = false,
+    startDateIsAllDay: Bool = false
   ) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
+    self.dueDateIsAllDay = dueDateIsAllDay
     self.startDate = startDate
+    self.startDateIsAllDay = startDateIsAllDay
     self.timeZone = timeZone
     self.priority = priority
     self.recurrence = recurrence
@@ -218,7 +231,9 @@ public struct ReminderUpdate: Sendable {
   public let title: String?
   public let notes: String?
   public let dueDate: Date??
+  public let dueDateIsAllDay: Bool?
   public let startDate: Date??
+  public let startDateIsAllDay: Bool?
   public let timeZone: String??
   public let priority: ReminderPriority?
   public let recurrence: RecurrenceRule??
@@ -230,7 +245,9 @@ public struct ReminderUpdate: Sendable {
     title: String? = nil,
     notes: String? = nil,
     dueDate: Date?? = nil,
+    dueDateIsAllDay: Bool? = nil,
     startDate: Date?? = nil,
+    startDateIsAllDay: Bool? = nil,
     timeZone: String?? = nil,
     priority: ReminderPriority? = nil,
     recurrence: RecurrenceRule?? = nil,
@@ -241,7 +258,9 @@ public struct ReminderUpdate: Sendable {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
+    self.dueDateIsAllDay = dueDateIsAllDay
     self.startDate = startDate
+    self.startDateIsAllDay = startDateIsAllDay
     self.timeZone = timeZone
     self.priority = priority
     self.recurrence = recurrence

@@ -14,7 +14,7 @@ enum ShowCommand {
         Date filters: YYYY-MM-DD, "YYYY-MM-DD HH:mm", ISO 8601, today, tomorrow.
         Filters can be top-level shortcuts: 'remindctl today' = 'remindctl show today'.
 
-        --list limits results to a named list. --search filters by substring in title or notes.
+        --list limits results to a named list (repeatable for multiple lists). --search filters by substring in title or notes.
 
         JSON output fields per reminder: id, title, notes, isCompleted, completionDate,
         priority (none|low|medium|high), dueDate, startDate, timeZone, recurrence, alarms,
@@ -34,7 +34,7 @@ enum ShowCommand {
             .make(
               label: "list",
               names: [.short("l"), .long("list")],
-              help: "Limit to a specific list",
+              help: "Limit to list(s) (repeatable: --list Work --list Personal)",
               parsing: .singleValue
             ),
             .make(
@@ -51,12 +51,12 @@ enum ShowCommand {
         "remindctl today",
         "remindctl show overdue",
         "remindctl show --json",
-        "remindctl show all --list Work --json",
+        "remindctl show all --list Work --list Personal --json",
         "remindctl show all --search milk",
         "remindctl show 2026-01-04",
       ]
     ) { values, runtime in
-      let listName = values.option("list")
+      let listNames = values.optionValues("list")
       let searchQuery = values.option("search")
       let filterToken = values.argument(0)
 
@@ -72,7 +72,18 @@ enum ShowCommand {
 
       let store = RemindersStore()
       try await store.requestAccess()
-      let reminders = try await store.reminders(in: listName)
+
+      let reminders: [ReminderItem]
+      if listNames.isEmpty {
+        reminders = try await store.reminders(in: nil)
+      } else {
+        var combined: [ReminderItem] = []
+        for name in listNames {
+          combined += try await store.reminders(in: name)
+        }
+        reminders = combined
+      }
+
       var filtered = ReminderFiltering.apply(reminders, filter: filter)
       if let query = searchQuery {
         filtered = ReminderFiltering.search(filtered, query: query)

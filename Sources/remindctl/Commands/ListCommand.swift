@@ -9,11 +9,11 @@ enum ListCommand {
       abstract: "List reminder lists or show list contents",
       discussion: """
         Without arguments, shows all reminder lists with reminder counts and overdue counts.
-        With a name argument, shows all reminders in that list.
+        With one or more name arguments, shows all reminders in those list(s).
 
-        Management operations: --create to create a new list, --delete to remove a list,
-        --rename <new-name> to rename. Deletion prompts for confirmation unless --force
-        or --no-input is set.
+        Management operations (single list only): --create to create a new list,
+        --delete to remove a list, --rename <new-name> to rename. Deletion prompts for
+        confirmation unless --force or --no-input is set.
 
         Aliases: 'lists', 'ls'. JSON output for list summaries includes: id, title,
         reminderCount, overdueCount.
@@ -40,13 +40,16 @@ enum ListCommand {
       ),
       usageExamples: [
         "remindctl list --json",
+        "remindctl list --json",
         "remindctl list Work --json",
+        "remindctl list Work Personal --json",
         "remindctl list Work --rename Office",
         "remindctl list Work --delete --force",
         "remindctl list Projects --create --json",
       ]
     ) { values, runtime in
-      let name = values.argument(0)
+      let names = values.positional
+      let name = names.first
       let renameTo = values.option("rename")
       let deleteList = values.flag("delete")
       let createList = values.flag("create")
@@ -90,8 +93,12 @@ enum ListCommand {
           return
         }
 
-        let reminders = try await store.reminders(in: name)
-        OutputRenderer.printReminders(reminders, format: runtime.outputFormat)
+        // One or more list names: fetch and merge reminders from all of them
+        var combined: [ReminderItem] = []
+        for listName in names {
+          combined += try await store.reminders(in: listName)
+        }
+        OutputRenderer.printReminders(combined, format: runtime.outputFormat)
         return
       }
 

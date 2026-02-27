@@ -133,7 +133,7 @@ enum AddCommand {
       let dueValue = values.option("due")
       let priorityValue = values.option("priority")
 
-      let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
+      let parsedDue = try dueValue.map(CommandHelpers.parseDueDate)
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
       var recurrence = try values.option("recurrence").map(CommandHelpers.parseRecurrence)
       let recDays = try values.option("recurrenceDays").map(CommandHelpers.parseDaysOfWeek)
@@ -148,7 +148,7 @@ enum AddCommand {
           endDate: recEnd?.date, endCount: recEnd?.count
         )
       }
-      let startDate = try values.option("startDate").map(CommandHelpers.parseDueDate)
+      let parsedStart = try values.option("startDate").map(CommandHelpers.parseDueDate)
       let timeZone = try values.option("timezone").map(CommandHelpers.parseTimeZone)
       var alarms = try values.optionValues("alarm").map(CommandHelpers.parseAlarm)
       alarms += try values.optionValues("locationAlarm").map(CommandHelpers.parseLocationAlarm)
@@ -167,9 +167,12 @@ enum AddCommand {
       }
 
       let draft = ReminderDraft(
-        title: title, notes: notes, dueDate: dueDate, startDate: startDate,
+        title: title, notes: notes,
+        dueDate: parsedDue?.date, startDate: parsedStart?.date,
         timeZone: timeZone, priority: priority, recurrence: recurrence,
-        alarms: alarms)
+        alarms: alarms,
+        dueDateIsAllDay: parsedDue?.isDateOnly ?? false,
+        startDateIsAllDay: parsedStart?.isDateOnly ?? false)
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }

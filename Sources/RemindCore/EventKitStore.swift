@@ -116,10 +116,11 @@ public actor RemindersStore {
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
-      reminder.dueDateComponents = calendarComponents(from: dueDate)
+      reminder.dueDateComponents = calendarComponents(from: dueDate, isDateOnly: draft.dueDateIsAllDay)
     }
     if let startDate = draft.startDate {
-      reminder.startDateComponents = calendarComponents(from: startDate)
+      reminder.startDateComponents = calendarComponents(
+        from: startDate, isDateOnly: draft.startDateIsAllDay)
     }
     if let tzID = draft.timeZone {
       let tz = TimeZone(identifier: tzID)
@@ -135,21 +136,7 @@ public actor RemindersStore {
     } catch {
       throw RemindCoreError.eventKitError("save reminder", detail: error.localizedDescription)
     }
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      startDate: date(from: reminder.startDateComponents),
-      timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-      recurrence: recurrenceRule(from: reminder),
-      alarms: extractAlarms(from: reminder),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func updateReminder(id: String, update: ReminderUpdate) async throws -> ReminderItem {
@@ -163,7 +150,8 @@ public actor RemindersStore {
     }
     if let dueDateUpdate = update.dueDate {
       if let dueDate = dueDateUpdate {
-        reminder.dueDateComponents = calendarComponents(from: dueDate)
+        let isDateOnly = update.dueDateIsAllDay ?? false
+        reminder.dueDateComponents = calendarComponents(from: dueDate, isDateOnly: isDateOnly)
       } else {
         reminder.dueDateComponents = nil
       }
@@ -173,7 +161,8 @@ public actor RemindersStore {
     }
     if let startDateUpdate = update.startDate {
       if let startDate = startDateUpdate {
-        reminder.startDateComponents = calendarComponents(from: startDate)
+        let isDateOnly = update.startDateIsAllDay ?? false
+        reminder.startDateComponents = calendarComponents(from: startDate, isDateOnly: isDateOnly)
       } else {
         reminder.startDateComponents = nil
       }
@@ -211,21 +200,7 @@ public actor RemindersStore {
       throw RemindCoreError.eventKitError("update reminder", detail: error.localizedDescription)
     }
 
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      startDate: date(from: reminder.startDateComponents),
-      timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-      recurrence: recurrenceRule(from: reminder),
-      alarms: extractAlarms(from: reminder),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func completeReminders(ids: [String]) async throws -> [ReminderItem] {
@@ -238,23 +213,7 @@ public actor RemindersStore {
       } catch {
         throw RemindCoreError.eventKitError("complete reminder", detail: error.localizedDescription)
       }
-      updated.append(
-        ReminderItem(
-          id: reminder.calendarItemIdentifier,
-          title: reminder.title ?? "",
-          notes: reminder.notes,
-          isCompleted: reminder.isCompleted,
-          completionDate: reminder.completionDate,
-          priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-          dueDate: date(from: reminder.dueDateComponents),
-          startDate: date(from: reminder.startDateComponents),
-          timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
-          recurrence: recurrenceRule(from: reminder),
-          alarms: extractAlarms(from: reminder),
-          listID: reminder.calendar.calendarIdentifier,
-          listName: reminder.calendar.title
-        )
-      )
+      updated.append(item(from: reminder))
     }
     return updated
   }
@@ -292,6 +251,7 @@ public actor RemindersStore {
       let notes: String?
       let isCompleted: Bool
       let completionDate: Date?
+      let creationDate: Date?
       let priority: Int
       let dueDateComponents: DateComponents?
       let startDateComponents: DateComponents?
@@ -370,6 +330,7 @@ public actor RemindersStore {
             notes: reminder.notes,
             isCompleted: reminder.isCompleted,
             completionDate: reminder.completionDate,
+            creationDate: reminder.creationDate,
             priority: Int(reminder.priority),
             dueDateComponents: reminder.dueDateComponents,
             startDateComponents: reminder.startDateComponents,
@@ -398,7 +359,9 @@ public actor RemindersStore {
         recurrence: data.recurrence,
         alarms: data.alarms,
         listID: data.listID,
-        listName: data.listName
+        listName: data.listName,
+        creationDate: data.creationDate,
+        dueDateIsAllDay: data.dueDateComponents?.hour == nil && data.dueDateComponents != nil
       )
     }
   }
@@ -409,6 +372,8 @@ public actor RemindersStore {
     }
     return item
   }
+
+
 
   private func calendar(named name: String) throws -> EKCalendar {
     let calendars = eventStore.calendars(for: .reminder).filter { $0.title == name }
@@ -545,8 +510,10 @@ public actor RemindersStore {
     }
   }
 
-  private func calendarComponents(from date: Date) -> DateComponents {
-    calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+  private func calendarComponents(from date: Date, isDateOnly: Bool = false) -> DateComponents {
+    let components: Set<Calendar.Component> =
+      isDateOnly ? [.year, .month, .day] : [.year, .month, .day, .hour, .minute]
+    return calendar.dateComponents(components, from: date)
   }
 
   private func date(from components: DateComponents?) -> Date? {
@@ -555,7 +522,9 @@ public actor RemindersStore {
   }
 
   private func item(from reminder: EKReminder) -> ReminderItem {
-    ReminderItem(
+    let dueDateIsAllDay =
+      reminder.dueDateComponents != nil && reminder.dueDateComponents?.hour == nil
+    return ReminderItem(
       id: reminder.calendarItemIdentifier,
       title: reminder.title ?? "",
       notes: reminder.notes,
@@ -564,11 +533,14 @@ public actor RemindersStore {
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
       startDate: date(from: reminder.startDateComponents),
-      timeZone: reminder.dueDateComponents?.timeZone?.identifier ?? reminder.startDateComponents?.timeZone?.identifier,
+      timeZone: reminder.dueDateComponents?.timeZone?.identifier
+        ?? reminder.startDateComponents?.timeZone?.identifier,
       recurrence: recurrenceRule(from: reminder),
       alarms: extractAlarms(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
+      listName: reminder.calendar.title,
+      creationDate: reminder.creationDate,
+      dueDateIsAllDay: dueDateIsAllDay
     )
   }
 }

@@ -483,4 +483,60 @@ struct ReminderStoreTests {
     #expect(updated.alarms.count == 1)
     #expect(updated.alarms[0] == ReminderAlarm(location: loc))
   }
+
+  // MARK: - All-Day Reminders
+
+  @Test("Create all-day reminder sets dueDateIsAllDay=true")
+  func createAllDayReminder() async throws {
+    let store = sampleStore()
+    let draft = ReminderDraft(
+      title: "All-day task", notes: nil, dueDate: Date(), priority: .none,
+      dueDateIsAllDay: true
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.dueDateIsAllDay == true)
+  }
+
+  @Test("Create timed reminder has dueDateIsAllDay=false")
+  func createTimedReminder() async throws {
+    let store = sampleStore()
+    let draft = ReminderDraft(
+      title: "Timed task", notes: nil, dueDate: Date(), priority: .none,
+      dueDateIsAllDay: false
+    )
+    let item = try await store.createReminder(draft, listName: "Home")
+    #expect(item.dueDateIsAllDay == false)
+  }
+
+  @Test("Update due date preserves all-day flag")
+  func updateDueDateAllDayFlag() async throws {
+    let store = sampleStore()
+    let newDate = Date(timeIntervalSince1970: 1_800_000_000)
+    let update = ReminderUpdate(dueDate: .some(newDate), dueDateIsAllDay: true)
+    let updated = try await store.updateReminder(id: "r1", update: update)
+    #expect(updated.dueDate == newDate)
+    #expect(updated.dueDateIsAllDay == true)
+  }
+
+  @Test("ReminderItem default dueDateIsAllDay is false")
+  func defaultAllDayIsFalse() {
+    let item = ReminderItem(
+      id: "x", title: "Test", notes: nil, isCompleted: false, completionDate: nil,
+      priority: .none, dueDate: Date(), listID: "l", listName: "Home"
+    )
+    #expect(item.dueDateIsAllDay == false)
+  }
+
+  // MARK: - Multiple Lists
+
+  @Test("Fetch reminders from multiple lists")
+  func fetchMultipleLists() async throws {
+    let store = sampleStore()
+    let home = try await store.reminders(in: "Home")
+    let work = try await store.reminders(in: "Work")
+    let combined = home + work
+    #expect(combined.count == 3)
+    #expect(combined.contains(where: { $0.listName == "Home" }))
+    #expect(combined.contains(where: { $0.listName == "Work" }))
+  }
 }

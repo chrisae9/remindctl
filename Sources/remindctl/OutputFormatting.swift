@@ -50,7 +50,7 @@ enum OutputRenderer {
   static func printReminder(_ reminder: ReminderItem, format: OutputFormat) {
     switch format {
     case .standard:
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due = reminder.dueDate.map { formatDue($0, isAllDay: reminder.dueDateIsAllDay) } ?? "no due date"
       let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
       let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
       let recurrence = reminder.recurrence.map { " repeats=\(formatRecurrence($0))" } ?? ""
@@ -92,6 +92,10 @@ enum OutputRenderer {
     }
   }
 
+  private static func formatDue(_ date: Date, isAllDay: Bool) -> String {
+    isAllDay ? DateParsing.formatDateOnly(date) : DateParsing.formatDisplay(date)
+  }
+
   private static func printRemindersStandard(_ reminders: [ReminderItem]) {
     let sorted = ReminderFiltering.sort(reminders)
     guard !sorted.isEmpty else {
@@ -100,7 +104,7 @@ enum OutputRenderer {
     }
     for (index, reminder) in sorted.enumerated() {
       let status = reminder.isCompleted ? "x" : " "
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due = reminder.dueDate.map { formatDue($0, isAllDay: reminder.dueDateIsAllDay) } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       let start = reminder.startDate.map { " start=\(DateParsing.formatDisplay($0))" } ?? ""
       let tz = reminder.timeZone.map { " tz=\($0)" } ?? ""
