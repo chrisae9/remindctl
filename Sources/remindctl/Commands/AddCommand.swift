@@ -12,8 +12,9 @@ enum AddCommand {
         Without --list, uses the default Reminders list. In non-TTY/automation mode,
         title must be provided via argument or --title (no interactive prompt).
 
-        Date formats (--due, --start-date): today, tomorrow, YYYY-MM-DD,
-        "YYYY-MM-DD HH:mm", ISO 8601.
+        Date formats (--due, --start-date):
+          Date-only (creates all-day reminder): today, tomorrow, YYYY-MM-DD
+          Timed (creates reminder with time): "YYYY-MM-DD HH:mm", ISO 8601
         Priority: none (default), low, medium, high.
         Recurrence: daily, weekly, monthly, yearly, 2-weekly, "every 3 months".
           --recurrence-days: comma-separated days (mon,tue,wed,thu,fri,sat,sun).
@@ -104,6 +105,7 @@ enum AddCommand {
         "remindctl add \"Buy milk\" --json",
         "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
         "remindctl add \"Review docs\" --priority high --due 2026-03-01",
+        "remindctl add \"Team offsite\" --due 2026-03-15",
         "remindctl add \"Standup\" --due tomorrow --recurrence daily --alarm -15m",
         "remindctl add \"Biweekly\" --recurrence 2-weekly --recurrence-days mon,fri",
         "remindctl add \"Leave home\" --location-alarm \"Home:37.77,-122.42:100:leave\"",
