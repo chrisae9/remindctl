@@ -18,6 +18,7 @@ let package = Package(
       linkerSettings: [
         .linkedFramework("EventKit"),
         .linkedFramework("CoreLocation"),
+        .linkedLibrary("sqlite3"),
       ]
     ),
     .executableTarget(

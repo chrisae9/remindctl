@@ -154,6 +154,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let alarms: [ReminderAlarm]
   public let listID: String
   public let listName: String
+  public let sectionName: String?
 
   public init(
     id: String,
@@ -170,7 +171,8 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     listID: String,
     listName: String,
     creationDate: Date? = nil,
-    dueDateIsAllDay: Bool = false
+    dueDateIsAllDay: Bool = false,
+    sectionName: String? = nil
   ) {
     self.id = id
     self.title = title
@@ -187,6 +189,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.alarms = alarms
     self.listID = listID
     self.listName = listName
+    self.sectionName = sectionName
   }
 }
 

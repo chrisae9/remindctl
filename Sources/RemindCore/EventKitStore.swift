@@ -260,7 +260,10 @@ public actor RemindersStore {
       let alarms: [ReminderAlarm]
       let listID: String
       let listName: String
+      let sectionName: String?
     }
+
+    let sectionMap = SectionResolver.resolve()
 
     let reminderData = await withCheckedContinuation { (continuation: CheckedContinuation<[ReminderData], Never>) in
       let predicate = eventStore.predicateForReminders(in: calendars)
@@ -338,7 +341,8 @@ public actor RemindersStore {
             recurrence: recurrence,
             alarms: alarms,
             listID: reminder.calendar.calendarIdentifier,
-            listName: reminder.calendar.title
+            listName: reminder.calendar.title,
+            sectionName: sectionMap[reminder.calendarItemIdentifier]
           )
         }
         continuation.resume(returning: data)
@@ -361,7 +365,8 @@ public actor RemindersStore {
         listID: data.listID,
         listName: data.listName,
         creationDate: data.creationDate,
-        dueDateIsAllDay: data.dueDateComponents?.hour == nil && data.dueDateComponents != nil
+        dueDateIsAllDay: data.dueDateComponents?.hour == nil && data.dueDateComponents != nil,
+        sectionName: data.sectionName
       )
     }
   }

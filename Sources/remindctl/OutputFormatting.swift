@@ -111,9 +111,16 @@ enum OutputRenderer {
       let recurrence = reminder.recurrence.map { " repeats=\(formatRecurrence($0))" } ?? ""
       let alarms = reminder.alarms.isEmpty ? "" : " alarms=[\(reminder.alarms.map(formatAlarm).joined(separator: ", "))]"
       Swift.print(
-        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(start)\(tz)\(recurrence)\(alarms)"
+        "[\(index + 1)] [\(status)] \(reminder.title) [\(listLabel(for: reminder))] — \(due)\(priority)\(start)\(tz)\(recurrence)\(alarms)"
       )
     }
+  }
+
+  private static func listLabel(for reminder: ReminderItem) -> String {
+    if let section = reminder.sectionName {
+      return "\(reminder.listName)/\(section)"
+    }
+    return reminder.listName
   }
 
   private static func printRemindersPlain(_ reminders: [ReminderItem]) {
